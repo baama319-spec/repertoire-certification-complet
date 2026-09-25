@@ -1,0 +1,64 @@
+from unittest.mock import Mock, patch
+
+from django.contrib.auth import get_user_model
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+
+class DiagnosticApiTests(APITestCase):
+    url = "/api/ia/diagnostic/"
+
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            email="client@example.com",
+            password="password123",
+            nom="Fall",
+            prenom="Mamadou",
+        )
+
+    def test_diagnostic_requires_authentication(self):
+        response = self.client.post(self.url, {"description": "Mon appareil ne démarre plus"})
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_diagnostic_rejects_short_description(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.post(self.url, {"description": "Panne"})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("description", response.data)
+
+    @patch.dict("os.environ", {"HUGGINGFACE_API_TOKEN": "test-token"})
+    @patch("diagnostics.services.requests.post")
+    def test_diagnostic_returns_model_json(self, post):
+        self.client.force_authenticate(self.user)
+        response_from_model = Mock(status_code=200)
+        response_from_model.json.return_value = {
+            "choices": [{"message": {"content": '{"categorie":"Électronique","specialite":"Téléphonie","probleme_probable":"Défaut de charge","causes_possibles":[],"questions_a_poser":[],"niveau_urgence":"normal","conseils_securite":[],"confiance":0.8,"avertissement":"À confirmer par un réparateur."}'}}]
+        }
+        post.return_value = response_from_model
+
+        response = self.client.post(
+            self.url,
+            {
+                "appareil": "Téléphone",
+                "description": "Le téléphone ne charge plus depuis hier.",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["categorie"], "Électronique")
+        post.assert_called_once()
+
+    @patch.dict("os.environ", {}, clear=True)
+    def test_diagnostic_returns_service_unavailable_when_not_configured(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.post(
+            self.url,
+            {"description": "Le réfrigérateur ne refroidit plus."},
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)

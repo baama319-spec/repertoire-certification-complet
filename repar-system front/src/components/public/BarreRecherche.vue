@@ -1,0 +1,1 @@
+<template><form class="searchbar" @submit.prevent="$router.push('/reparateurs')"><label>⌕ <input placeholder="Quel service cherchez-vous ?" /></label><label class="place">● <input placeholder="Localisation (ex: Dakar)" /></label><button>Rechercher</button></form></template>

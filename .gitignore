@@ -1,0 +1,19 @@
+# Frontend
+repar-system front/node_modules/
+repar-system front/.vite/
+repar-system front/.git-frontend-history/
+
+# Backend
+repar-system back/.env
+repar-system back/__pycache__/
+repar-system back/**/__pycache__/
+repar-system back/*.py[cod]
+repar-system back/**/*.py[cod]
+repar-system back/.venv/
+repar-system back/staticfiles/
+repar-system back/medias/*
+!repar-system back/medias/.gitkeep
+
+# Generated and local files
+*.log
+.DS_Store

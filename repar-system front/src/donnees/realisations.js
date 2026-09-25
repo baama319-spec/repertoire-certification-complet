@@ -1,0 +1,5 @@
+export const realisations = [
+  { titre: 'Remplacement Carte Mère Laptop', categorie: 'Informatique', date: '05/09/2026', note: '5.0', client: 'O. Ndiaye', avant: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=85', apres: 'https://images.unsplash.com/photo-1555617981-dac3880eac6e?auto=format&fit=crop&w=600&q=85', icone: '▣' },
+  { titre: 'Déblocage Pompe Lave-Linge', categorie: 'Électroménager', date: '01/09/2026', note: '4.9', client: 'F. Cissé', avant: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=600&q=85', apres: 'https://images.unsplash.com/photo-1626806819282-2c1dc01a5e0c?auto=format&fit=crop&w=600&q=85', icone: '⚙' },
+  { titre: 'Changement Dalle TV 55”', categorie: 'Électronique', date: '28/08/2026', note: '5.0', client: 'A. Traoré', avant: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=600&q=85', apres: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=600&q=85', icone: '▱' },
+]

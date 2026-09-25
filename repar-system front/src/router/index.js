@@ -1,0 +1,73 @@
+import { createRouter, createWebHistory } from 'vue-router'
+import Accueil from '../views/public/Accueil.vue'
+import TrouverReparateur from '../views/public/TrouverReparateur.vue'
+import ProfilReparateurPublic from '../views/public/ProfilReparateurPublic.vue'
+import DemandesReparateur from '../views/reparateur/DemandesReparateur.vue'
+import Realisations from '../views/reparateur/Realisations.vue'
+import AvisClients from '../views/reparateur/AvisClients.vue'
+import MonProfilReparateur from '../views/reparateur/MonProfilReparateur.vue'
+import TableauDeBordAdmin from '../views/administrateur/TableauDeBordAdmin.vue'
+import GestionCategories from '../views/administrateur/GestionCategories.vue'
+import GestionZones from '../views/administrateur/GestionZones.vue'
+import GestionDemandes from '../views/administrateur/GestionDemandes.vue'
+import GestionReparateurs from '../views/administrateur/GestionReparateurs.vue'
+import GestionClients from '../views/administrateur/GestionClients.vue'
+import Connexion from '../views/authentification/Connexion.vue'
+import Inscription from '../views/authentification/Inscription.vue'
+import MesDemandes from '../views/client/MesDemandes.vue'
+import MonProfil from '../views/client/MonProfil.vue'
+import MesAvis from '../views/client/MesAvis.vue'
+import DevenirReparateur from '../views/public/DevenirReparateur.vue'
+import Diagnostic from '../views/public/Diagnostic.vue'
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [
+    { path: '/', name: 'accueil', component: Accueil },
+    { path: '/reparateurs', name: 'trouver-reparateur', component: TrouverReparateur },
+    { path: '/diagnostic', name: 'diagnostic', component: Diagnostic },
+    { path: '/reparateurs/:slug', name: 'profil-reparateur', component: ProfilReparateurPublic, props: true },
+    { path: '/devenir-reparateur', name: 'devenir-reparateur', component: DevenirReparateur },
+    { path: '/pro', redirect: '/pro/demandes' },
+    { path: '/pro/demandes', name: 'demandes-reparateur', component: DemandesReparateur },
+    { path: '/pro/realisations', name: 'realisations-reparateur', component: Realisations },
+    { path: '/pro/avis', name: 'avis-clients-reparateur', component: AvisClients },
+    { path: '/pro/profil', name: 'profil-reparateur-pro', component: MonProfilReparateur },
+    { path: '/admin', name: 'admin-dashboard', component: TableauDeBordAdmin },
+    { path: '/admin/categories', name: 'admin-categories', component: GestionCategories },
+    { path: '/admin/zones', name: 'admin-zones', component: GestionZones },
+    { path: '/admin/demandes', name: 'admin-demandes', component: GestionDemandes },
+    { path: '/admin/reparateurs', name: 'admin-reparateurs', component: GestionReparateurs },
+    { path: '/admin/clients', name: 'admin-clients', component: GestionClients },
+    { path: '/connexion', name: 'connexion', component: Connexion },
+    { path: '/inscription', name: 'inscription', component: Inscription },
+    { path: '/client/demandes', name: 'mes-demandes-client', component: MesDemandes },
+    { path: '/client/profil', name: 'profil-client', component: MonProfil },
+    { path: '/client/avis', name: 'mes-avis-client', component: MesAvis },
+  ],
+})
+
+const lireUtilisateur = () => {
+  const brut = localStorage.getItem('reparsystem-utilisateur') || sessionStorage.getItem('reparsystem-utilisateur')
+  try { return brut ? JSON.parse(brut) : null } catch (_) { return null }
+}
+
+router.beforeEach((to) => {
+  const utilisateur = lireUtilisateur()
+  if (to.path.startsWith('/admin') && utilisateur?.role !== 'ADMINISTRATEUR') {
+    return { path: '/connexion', query: { redirection: to.fullPath } }
+  }
+  if (to.path.startsWith('/client') && utilisateur?.role !== 'CLIENT') {
+    return { path: '/connexion', query: { redirection: to.fullPath } }
+  }
+  if (to.path === '/diagnostic' && utilisateur?.role !== 'CLIENT') {
+    return { path: '/connexion', query: { redirection: to.fullPath } }
+  }
+  const profilProfessionnelAccessible = to.path === '/pro/profil' && utilisateur?.profil_reparateur
+  const reparateurVerifie = utilisateur?.role === 'REPARATEUR' || utilisateur?.profil_reparateur?.profil_verifie
+  if (to.path.startsWith('/pro') && !profilProfessionnelAccessible && !reparateurVerifie) {
+    return { path: '/connexion', query: { redirection: to.fullPath } }
+  }
+})
+
+export default router

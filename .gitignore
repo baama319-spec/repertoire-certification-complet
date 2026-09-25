@@ -17,3 +17,9 @@ repar-system back/medias/*
 # Generated and local files
 *.log
 .DS_Store
+
+# Legacy workspace copies kept outside the global project
+.git-frontend-history/
+front end/
+front end /
+repar-system/

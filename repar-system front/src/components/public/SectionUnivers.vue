@@ -104,13 +104,13 @@ onBeforeUnmount(() => {
   --muted: #748197;
   min-height: 920px;
   overflow: hidden;
-  padding: 140px max(7%, 52px) 110px;
+  padding: 90px max(7%, 52px) 110px;
   background: #f5f6fb;
 }
 
 .universe-intro {
   max-width: 760px;
-  margin: 0 auto 88px;
+  margin: 0 auto var(--home-title-content-gap, 64px);
   text-align: center;
 }
 
@@ -123,7 +123,7 @@ onBeforeUnmount(() => {
 
 .universe h2 {
   max-width: 760px;
-  margin: 13px 0 14px;
+  margin: 0;
   color: var(--ink);
   font-size: clamp(30px, 4vw, 48px);
   line-height: 1.12;
@@ -300,8 +300,8 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 900px) {
-  .universe { min-height: 800px; padding: 90px 5% 95px; }
-  .universe-intro { margin-bottom: 58px; }
+  .universe { min-height: 800px; padding: 72px 5% 95px; }
+  .universe-intro { margin-bottom: var(--home-title-content-gap, 48px); }
   .photo-composition { height: 510px; }
   .photo-frame { width: 220px; height: 285px; transform: translate3d(calc(-50% + var(--image-shift)), calc(-50% + var(--image-y) + 18px), 0); }
   .is-visible .photo-center-back { transform: translate3d(calc(-50% - 65px), calc(-50% - 8px), 0); }
@@ -310,8 +310,8 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 600px) {
-  .universe { min-height: auto; padding: 72px 20px 78px; }
-  .universe-intro { margin-bottom: 42px; }
+  .universe { min-height: auto; padding: 56px 20px 78px; }
+  .universe-intro { margin-bottom: var(--home-title-content-gap, 40px); }
   .universe h2 { font-size: 34px; }
   .universe-intro p { max-width: 280px; line-height: 1.5; }
   .photo-composition { display: grid; grid-template-columns: 1fr; height: auto; }

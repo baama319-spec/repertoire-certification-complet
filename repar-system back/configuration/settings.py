@@ -53,3 +53,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "commun.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 20,
 }
+
+# URL du workflow n8n qui distribue les e-mails de notification. En production,
+# cette valeur doit désigner l'hôte n8n accessible depuis Django (et non localhost
+# si les deux services sont dans des conteneurs différents).
+N8N_NOTIFICATION_WEBHOOK_URL = os.getenv(
+    "N8N_NOTIFICATION_WEBHOOK_URL",
+    "http://localhost:5678/webhook/repar-system-notification",
+)

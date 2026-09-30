@@ -28,24 +28,7 @@ export async function chargerReferentielsDiagnostic () {
   }
 }
 
-export function trouverLocalisation (localisations, ville, quartier = '') {
-  return localisations.find((item) => correspond(item.ville, ville) && quartier && correspond(item.quartier, quartier))
-    || localisations.find((item) => correspond(item.ville, ville))
-}
-
 export function trouverSpecialite (specialites, nom) {
   return specialites.find((item) => correspond(item.nom, nom))
     || specialites.find((item) => String(item.nom || '').toLocaleLowerCase().includes(String(nom || '').toLocaleLowerCase()))
-}
-
-export async function creerDemandeDepuisDiagnostic ({ description, localisation, specialite }) {
-  return api('/demandes/', {
-    method: 'POST',
-    body: JSON.stringify({
-      description_probleme: description,
-      localisation,
-      ...(specialite ? { specialite } : {}),
-      source: 'RECOMMANDATION_IA',
-    }),
-  })
 }

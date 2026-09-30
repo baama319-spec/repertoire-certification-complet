@@ -1,5 +1,9 @@
 from django.db import models
 class DemandeMiseEnRelation(models.Model):
+    class ModeIntervention(models.TextChoices):
+        DOMICILE = "DOMICILE", "À domicile"
+        ATELIER = "ATELIER", "À l’atelier du réparateur"
+
     class Statut(models.TextChoices):
         EN_ATTENTE = "EN_ATTENTE", "En attente"
         ACCEPTEE = "ACCEPTEE", "Acceptée"
@@ -12,7 +16,10 @@ class DemandeMiseEnRelation(models.Model):
     reparateur = models.ForeignKey("reparateurs.Reparateur", on_delete=models.SET_NULL, null=True, blank=True, related_name="demandes")
     localisation = models.ForeignKey("localisations.Localisation", on_delete=models.PROTECT, related_name="demandes")
     specialite = models.ForeignKey("specialites.Specialite", on_delete=models.SET_NULL, null=True, blank=True, related_name="demandes")
+    appareil = models.CharField(max_length=120, blank=True, default="")
     description_probleme = models.TextField()
+    mode_intervention = models.CharField(max_length=12, choices=ModeIntervention.choices, default=ModeIntervention.DOMICILE)
+    adresse_intervention = models.CharField(max_length=255, blank=True, default="")
     date_creation = models.DateTimeField(auto_now_add=True)
     date_reponse = models.DateTimeField(null=True, blank=True)
     statut = models.CharField(max_length=20, choices=Statut.choices, default=Statut.EN_ATTENTE)

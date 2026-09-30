@@ -9,7 +9,7 @@ defineEmits(['selectionner'])
     <span class="demande-contenu">
       <span class="demande-titre"><b>{{ demande.client }}</b><em v-if="demande.statut !== 'Nouveau'" :class="demande.couleur">{{ demande.statut }}</em><small>{{ demande.temps }}</small></span>
       <span class="demande-probleme">▣　{{ demande.appareil }}　•　{{ demande.panne }}</span>
-      <span class="demande-lieu">●　{{ demande.zone }} ({{ demande.distance }})</span>
+      <span class="demande-lieu">●　{{ demande.zone }}<template v-if="demande.distance"> ({{ demande.distance }})</template></span>
     </span>
     <span class="chevron">›</span>
   </button>

@@ -1,7 +1,34 @@
+import { api } from './api'
 import { ref } from 'vue'
-const demandes = ref([
-  { id: '#D-2026-089', date: '10/09/2026', time: '14:32', client: 'Mamadou Fall', phone: '+221 77 123 45 67', zone: 'Dakar, Plateau', device: 'Smartphone', issue: 'Écran brisé', icon: '▯', status: 'En attente' },
-  { id: '#D-2026-088', date: '09/09/2026', time: '11:20', client: 'Fatou Cissé', phone: '+221 77 456 78 90', zone: 'Dakar, Liberté 6', device: 'Lave-linge', issue: 'Pompe bloquée', icon: '▣', status: 'Acceptée' },
-  { id: '#D-2026-087', date: '08/09/2026', time: '16:45', client: 'Omar Ndiaye', phone: '+221 77 888 99 00', zone: 'Dakar, Ngor', device: 'PC Portable', issue: 'Surchauffe', icon: '▱', status: 'Terminée' },
-])
-export function useDemandes() { const remove = (id) => { demandes.value = demandes.value.filter((demande) => demande.id !== id) }; return { demandes, remove } }
+
+const liste = reponse => Array.isArray(reponse) ? reponse : reponse.results || []
+
+export const chargerDemandes = async ({ contexte } = {}) => {
+  const demandes = []
+  let page = 1
+  let pagesSuivantes = true
+
+  while (pagesSuivantes) {
+    const params = new URLSearchParams({ page: String(page) })
+    if (contexte) params.set('contexte', contexte)
+    const reponse = await api(`/demandes/?${params.toString()}`)
+    if (Array.isArray(reponse)) return reponse
+
+    demandes.push(...liste(reponse))
+    pagesSuivantes = Boolean(reponse.next)
+    page += 1
+  }
+
+  return demandes
+}
+export const creerDemande = async (donnees) => api('/demandes/', { method: 'POST', body: JSON.stringify(donnees) })
+export const accepterDemande = async (id) => api(`/demandes/${id}/accepter/`, { method: 'POST' })
+export const refuserDemande = async (id) => api(`/demandes/${id}/refuser/`, { method: 'POST' })
+
+// Compatibilité avec l'écran administrateur existant, qui sera migré vers les
+// fonctions asynchrones ci-dessus dans une évolution séparée.
+export const useDemandes = () => {
+  const demandes = ref([])
+  const remove = id => { demandes.value = demandes.value.filter(demande => demande.id !== id) }
+  return { demandes, remove }
+}

@@ -1,0 +1,89 @@
+{
+  "id": "c4e8b9d0-8ad7-4ad3-bd0f-1f7d1a9fdf01",
+  "name": "Repar-System email notifications",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "repar-system-notification",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "subject": "{{ $json.body.title }}",
+        "message": "<p>Bonjour,</p><p>{{ $json.body.message }}</p><p>Merci.</p>",
+        "toEmail": "={{ $json.body.user_email }}",
+        "options": {}
+      },
+      "id": "gmail-send",
+      "name": "Envoyer email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 1,
+      "position": [
+        40,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "responseBody": "{{ JSON.stringify({ status: 'ok', message: 'Notification sent' }) }}",
+        "responseCode": 200,
+        "responseHeaders": {
+          "Content-Type": "application/json"
+        }
+      },
+      "id": "respond-ok",
+      "name": "Réponse HTTP",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        300,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Envoyer email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envoyer email": {
+      "main": [
+        [
+          {
+            "node": "Réponse HTTP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "triggerCount": 1,
+  "versionId": "00000000-0000-0000-0000-000000000000",
+  "tags": []
+}

@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -10,6 +11,7 @@ const props = defineProps({
 })
 
 const mapElement = ref(null)
+const router = useRouter()
 const map = ref(null)
 const distanceMax = ref(20)
 const specialite = ref('Toutes les catégories')
@@ -54,6 +56,39 @@ const drivingTimeLabel = item => {
   const minutes = Math.max(1, Math.round((distance / 30) * 60))
   return minutes < 60 ? `${minutes} min en voiture` : `${Math.floor(minutes / 60)} h ${minutes % 60} min en voiture`
 }
+
+const creerPopupProfil = (item) => {
+  const lien = document.createElement('a')
+  const routeProfil = { name: 'profil-reparateur', params: { slug: item.slug || String(item.id) } }
+  lien.className = 'repairer-popup-link'
+  lien.href = router.resolve(routeProfil).href
+  lien.setAttribute('aria-label', `Ouvrir le profil de ${item.name}`)
+  lien.title = 'Cliquer pour voir le profil du réparateur'
+
+  const nom = document.createElement('strong')
+  nom.className = 'repairer-popup-name'
+  nom.textContent = item.name || 'Réparateur'
+  const specialiteLabel = document.createElement('span')
+  specialiteLabel.textContent = item.specialty || 'Réparation'
+  const distance = document.createElement('strong')
+  distance.textContent = distanceLabel(item)
+  const duree = document.createElement('span')
+  duree.textContent = drivingTimeLabel(item)
+  const coordonnees = document.createElement('small')
+  coordonnees.textContent = `${item.lat.toFixed(6)}, ${item.lon.toFixed(6)}`
+  const action = document.createElement('span')
+  action.className = 'repairer-popup-action'
+  action.textContent = 'Voir le profil →'
+
+  lien.append(nom, specialiteLabel, distance, duree, coordonnees, action)
+  L.DomEvent.on(lien, 'click', (event) => {
+    L.DomEvent.preventDefault(event)
+    L.DomEvent.stopPropagation(event)
+    router.push(routeProfil)
+  })
+  return lien
+}
+
 const selectProfessional = (item) => {
   selectedId.value = item.id
   const marker = markers.get(item.id)
@@ -100,7 +135,7 @@ const drawMarkers = () => {
       fillOpacity: 1,
       className: 'repairer-point',
     }).addTo(map.value)
-    marker.bindPopup(`<strong>${item.name}</strong><br>${item.specialty}<br><b>${distanceLabel(item)}</b><br><span>${drivingTimeLabel(item)}</span><br><small>${item.lat.toFixed(6)}, ${item.lon.toFixed(6)}</small>`)
+    marker.bindPopup(creerPopupProfil(item))
     marker.on('click', () => { selectedId.value = item.id; drawRoute(item) })
     markers.set(item.id, { marker, pulse })
   })
@@ -221,6 +256,9 @@ onBeforeUnmount(() => {
 .status-dot::after { content: ''; position: absolute; width: 9px; height: 9px; right: 2px; top: 2px; border-radius: 50%; background: #fff; }
 .filter-note { margin-top: 32px; color: #087f70; font-size: 10px; }
 .senegal-map { min-height: 530px; background: #d7edf2; z-index: 0; border-left: 1px solid #edf3f7; border-right: 1px solid #edf3f7; }
+.senegal-map :deep(.repairer-popup-link) { display: grid; gap: 3px; min-width: 150px; color: #152743; text-decoration: none; cursor: pointer; }
+.senegal-map :deep(.repairer-popup-link:hover .repairer-popup-name), .senegal-map :deep(.repairer-popup-action) { color: #087f70; }
+.senegal-map :deep(.repairer-popup-action) { margin-top: 5px; font-size: 11px; font-weight: 800; }
 .senegal-map :deep(.route-info-label) { border: 0; border-radius: 6px; padding: 6px 9px; color: #7d2525; background: #fff; box-shadow: 0 3px 10px #61202026; font-size: 11px; font-weight: 800; white-space: nowrap; }
 .senegal-map :deep(.route-info-label::before) { display: none; }
 :deep(.repairer-pulse) { transform-box: fill-box; transform-origin: center; animation: repairer-radius-pulse 1.8s ease-out infinite; }

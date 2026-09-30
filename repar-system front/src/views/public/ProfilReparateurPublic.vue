@@ -1,12 +1,13 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import EntetePublic from '../../components/public/EntetePublic.vue'
 import PiedDePage from '../../components/public/PiedDePage.vue'
 import { api } from '../../services/api'
 import { chargerRealisations } from '../../services/serviceRealisations'
 
 const route = useRoute()
+const router = useRouter()
 const active = ref('about'), reparateur = ref(null), realisations = ref([]), chargement = ref(false)
 const slug = nom => (nom || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 const nom = computed(() => reparateur.value ? [reparateur.value.utilisateur_detail?.prenom, reparateur.value.utilisateur_detail?.nom].filter(Boolean).join(' ') : '')
@@ -24,6 +25,7 @@ const charger = async () => {
 }
 onMounted(charger)
 watch(() => route.params.slug, charger)
+const demanderIntervention = () => router.push({ name: 'demande-reparation', query: { reparateur: reparateur.value.id } })
 </script>
 
 <template>
@@ -39,7 +41,7 @@ watch(() => route.params.slug, charger)
           <h1>{{ nom }} <i>✓</i></h1>
           <p>{{ specialites.map(item => item.nom).join(' · ') || 'Réparateur professionnel' }}</p>
           <div><b>★ — <small>Avis clients</small></b><span>● {{ zones[0] || 'Zone non renseignée' }}</span><span>✓ Profil vérifié</span></div>
-          <button class="profile-action">Demander une intervention</button>
+          <button class="profile-action" @click="demanderIntervention">Demander une intervention</button>
         </div>
       </section>
       <section class="detail-content">

@@ -19,6 +19,7 @@ import MonProfil from '../views/client/MonProfil.vue'
 import MesAvis from '../views/client/MesAvis.vue'
 import DevenirReparateur from '../views/public/DevenirReparateur.vue'
 import Diagnostic from '../views/public/Diagnostic.vue'
+import DemandeReparation from '../views/public/DemandeReparation.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +27,7 @@ const router = createRouter({
     { path: '/', name: 'accueil', component: Accueil },
     { path: '/reparateurs', name: 'trouver-reparateur', component: TrouverReparateur },
     { path: '/diagnostic', name: 'diagnostic', component: Diagnostic },
+    { path: '/demande-reparation', name: 'demande-reparation', component: DemandeReparation },
     { path: '/reparateurs/:slug', name: 'profil-reparateur', component: ProfilReparateurPublic, props: true },
     { path: '/devenir-reparateur', name: 'devenir-reparateur', component: DevenirReparateur },
     { path: '/pro', redirect: '/pro/demandes' },
@@ -54,16 +56,19 @@ const lireUtilisateur = () => {
 
 router.beforeEach((to) => {
   const utilisateur = lireUtilisateur()
+  const pageSansFooter = ['/connexion', '/inscription'].includes(to.path)
+  document.body.classList.toggle('page-no-footer', Boolean(utilisateur) && !pageSansFooter)
+
   if (to.path.startsWith('/admin') && utilisateur?.role !== 'ADMINISTRATEUR') {
     return { path: '/connexion', query: { redirection: to.fullPath } }
   }
   if (to.path.startsWith('/client') && utilisateur?.role !== 'CLIENT') {
     return { path: '/connexion', query: { redirection: to.fullPath } }
   }
-  if (to.path === '/diagnostic' && utilisateur?.role !== 'CLIENT') {
+  if (['/diagnostic', '/demande-reparation'].includes(to.path) && utilisateur?.role !== 'CLIENT') {
     return { path: '/connexion', query: { redirection: to.fullPath } }
   }
-  const profilProfessionnelAccessible = to.path === '/pro/profil' && utilisateur?.profil_reparateur
+  const profilProfessionnelAccessible = Boolean(utilisateur?.profil_reparateur)
   const reparateurVerifie = utilisateur?.role === 'REPARATEUR' || utilisateur?.profil_reparateur?.profil_verifie
   if (to.path.startsWith('/pro') && !profilProfessionnelAccessible && !reparateurVerifie) {
     return { path: '/connexion', query: { redirection: to.fullPath } }

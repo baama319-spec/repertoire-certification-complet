@@ -1,9 +1,13 @@
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
+from unittest.mock import patch
 
 from clients.models import Client
 from localisations.models import Localisation
+from notifications.models import Notification
+from reparateurs.models import Reparateur
+from .models import DemandeMiseEnRelation
 
 
 class CreationDemandeTests(APITestCase):
@@ -27,8 +31,11 @@ class CreationDemandeTests(APITestCase):
 		response = self.client.post(
 			"/api/demandes/",
 			{
+				"appareil": "Smartphone · Samsung Galaxy S21",
 				"description_probleme": "Mon téléphone ne charge plus depuis hier.",
 				"localisation": self.localisation.pk,
+				"mode_intervention": "DOMICILE",
+				"adresse_intervention": "Dakar Plateau, rue 10",
 				"source": "RECOMMANDATION_IA",
 			},
 			format="json",
@@ -36,3 +43,222 @@ class CreationDemandeTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 		self.assertEqual(response.data["client"], self.client_profil.pk)
+		self.assertEqual(response.data["appareil"], "Smartphone · Samsung Galaxy S21")
+		self.assertEqual(response.data["statut"], DemandeMiseEnRelation.Statut.EN_ATTENTE)
+		self.assertEqual(response.data["mode_intervention"], "DOMICILE")
+		self.assertEqual(response.data["adresse_intervention"], "Dakar Plateau, rue 10")
+
+	def test_description_trop_courte_est_refusee(self):
+		response = self.client.post(
+			"/api/demandes/",
+			{
+				"description_probleme": "Panne",
+				"localisation": self.localisation.pk,
+			},
+			format="json",
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertFalse(DemandeMiseEnRelation.objects.exists())
+
+	def test_un_compte_client_avec_profil_reparateur_peut_lister_ses_demandes_entrantes(self):
+		user_model = get_user_model()
+		repairer_user = user_model.objects.create_user(
+			email="double-role@example.com",
+			password="password123",
+			nom="Ly",
+			prenom="Aziz",
+			role=user_model.Role.CLIENT,
+		)
+		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+		client_user = user_model.objects.create_user(
+			email="autre-client@example.com",
+			password="password123",
+			nom="Client",
+			prenom="Aly",
+		)
+		client_profile = Client.objects.create(utilisateur=client_user)
+		demande = DemandeMiseEnRelation.objects.create(
+			client=client_profile,
+			reparateur=repairer_profile,
+			localisation=Localisation.objects.create(
+				nom="Dakar Plateau",
+				adresse="Dakar Plateau",
+				quartier="Dakar Plateau",
+				ville="Dakar",
+			),
+			description_probleme="Écran du téléphone cassé après une chute.",
+		)
+
+		self.client.force_authenticate(repairer_user)
+		response = self.client.get("/api/demandes/?contexte=reparateur")
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.assertEqual([item["id"] for item in response.data["results"]], [demande.pk])
+
+	@patch("demandes.views.envoyer_notification_n8n")
+	def test_creation_demande_ciblee_notifie_le_reparateur(self, notifier_n8n):
+		user_model = get_user_model()
+		repairer_user = user_model.objects.create_user(
+			email="reparateur@example.com",
+			password="password123",
+			nom="Test",
+			prenom="Reparateur",
+			role=user_model.Role.REPARATEUR,
+		)
+		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+
+		response = self.client.post(
+			"/api/demandes/",
+			{
+				"description_probleme": "Mon téléphone ne charge plus depuis hier.",
+				"localisation": self.localisation.pk,
+				"reparateur": repairer_profile.pk,
+			},
+			format="json",
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		self.assertTrue(
+			Notification.objects.filter(
+				utilisateur=repairer_user,
+				type=Notification.Type.NOUVELLE_DEMANDE,
+			).exists()
+		)
+		notifier_n8n.assert_called_once_with(
+			repairer_user,
+			"Nouvelle demande de réparation",
+			"Un client vous a envoyé une nouvelle demande de réparation.",
+			"nouvelle_demande",
+		)
+
+
+class AcceptationDemandeTests(APITestCase):
+	@patch("demandes.views.envoyer_notification_n8n")
+	def test_reparateur_accepte_demande_et_declenche_notification(self, notifier_n8n):
+		user_model = get_user_model()
+		client_user = user_model.objects.create_user(
+			email="babaamadouba1@gmail.com",
+			password="password123",
+			nom="Test",
+			prenom="Client",
+			role=user_model.Role.CLIENT,
+		)
+		repairer_user = user_model.objects.create_user(
+			email="reparateur@example.com",
+			password="password123",
+			nom="Test",
+			prenom="Reparateur",
+			role=user_model.Role.REPARATEUR,
+		)
+		client_profile = Client.objects.create(utilisateur=client_user)
+		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+		localisation = Localisation.objects.create(
+			nom="Dakar Plateau",
+			adresse="Dakar Plateau",
+			quartier="Dakar Plateau",
+			ville="Dakar",
+		)
+		demande = DemandeMiseEnRelation.objects.create(
+			client=client_profile,
+			reparateur=repairer_profile,
+			localisation=localisation,
+			description_probleme="Simulation de test : réparation téléphone.",
+		)
+
+		self.client.force_authenticate(repairer_user)
+		response = self.client.post(
+			f"/api/demandes/{demande.pk}/accepter/",
+			{},
+			format="json",
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		demande.refresh_from_db()
+		self.assertEqual(demande.statut, DemandeMiseEnRelation.Statut.ACCEPTEE)
+		self.assertTrue(
+			Notification.objects.filter(
+				utilisateur=client_user,
+				type=Notification.Type.DEMANDE_ACCEPTEE,
+			).exists()
+		)
+		notifier_n8n.assert_called_once_with(
+			client_user,
+			"Demande acceptée",
+			"Votre demande a été acceptée.",
+			"demande_acceptee",
+		)
+
+	@patch("demandes.views.envoyer_notification_n8n")
+	def test_compte_client_avec_profil_reparateur_assigne_peut_accepter(self, notifier_n8n):
+		user_model = get_user_model()
+		repairer_user = user_model.objects.create_user(
+			email="aziz@example.com",
+			password="password123",
+			nom="Ly",
+			prenom="Aziz",
+		)
+		client_user = user_model.objects.create_user(
+			email="aly@example.com",
+			password="password123",
+			nom="Client",
+			prenom="Aly",
+		)
+		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+		client_profile = Client.objects.create(utilisateur=client_user)
+		demande = DemandeMiseEnRelation.objects.create(
+			client=client_profile,
+			reparateur=repairer_profile,
+			localisation=Localisation.objects.create(
+				nom="Dakar Plateau",
+				adresse="Dakar Plateau",
+				quartier="Dakar Plateau",
+				ville="Dakar",
+			),
+			description_probleme="Réparer le téléphone qui ne s’allume plus.",
+		)
+
+		self.client.force_authenticate(repairer_user)
+		response = self.client.post(f"/api/demandes/{demande.pk}/accepter/", {}, format="json")
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		demande.refresh_from_db()
+		self.assertEqual(demande.statut, DemandeMiseEnRelation.Statut.ACCEPTEE)
+		notifier_n8n.assert_called_once()
+
+	@patch("demandes.views.envoyer_notification_n8n")
+	def test_reparateur_refuse_demande_et_mise_a_jour_du_statut(self, notifier_n8n):
+		user_model = get_user_model()
+		repairer_user = user_model.objects.create_user(
+			email="refus-reparateur@example.com",
+			password="password123",
+			nom="Réparateur",
+			prenom="Test",
+			role=user_model.Role.REPARATEUR,
+		)
+		client_user = user_model.objects.create_user(
+			email="refus-client@example.com",
+			password="password123",
+			nom="Client",
+			prenom="Test",
+			role=user_model.Role.CLIENT,
+		)
+		demande = DemandeMiseEnRelation.objects.create(
+			client=Client.objects.create(utilisateur=client_user),
+			reparateur=Reparateur.objects.create(utilisateur=repairer_user),
+			localisation=Localisation.objects.create(
+				nom="Dakar Plateau",
+				adresse="Dakar Plateau",
+				quartier="Dakar Plateau",
+				ville="Dakar",
+			),
+			description_probleme="Réparer le téléphone qui ne s’allume plus.",
+		)
+
+		self.client.force_authenticate(repairer_user)
+		response = self.client.post(f"/api/demandes/{demande.pk}/refuser/", {}, format="json")
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		demande.refresh_from_db()
+		self.assertEqual(demande.statut, DemandeMiseEnRelation.Statut.REFUSEE)
+		notifier_n8n.assert_called_once()

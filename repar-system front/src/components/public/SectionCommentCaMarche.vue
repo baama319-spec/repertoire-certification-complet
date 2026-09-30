@@ -25,20 +25,17 @@ onBeforeUnmount(() => observer?.disconnect())
     <div class="how-steps">
       <article class="how-step">
         <div class="step-heading"><div class="step-number">01</div><h3>Décrivez votre besoin</h3></div>
-        <p>Indiquez ce qu’il faut réparer et votre localisation en quelques secondes.</p>
-        <div class="demo-card search-demo"><div class="demo-top"><b>⚒ ReparSystem</b><span>☰</span></div><strong>Que faut-il réparer ?</strong><div class="demo-field">▯　Écran de téléphone <span>⌄</span></div><div class="demo-field">●　Dakar Plateau <span>⌾</span></div><div class="demo-button">⌕　 Rechercher</div></div>
+        <div class="demo-card search-demo"><div class="demo-top"><span>☰</span></div><strong>Que faut-il réparer ?</strong><div class="demo-field">▯　Écran de téléphone <span>⌄</span></div><div class="demo-field">●　Dakar Plateau <span>⌾</span></div><div class="demo-button">⌕　 Rechercher</div></div>
       </article>
       <div class="step-line" aria-hidden="true">→</div>
       <article class="how-step">
         <div class="step-heading"><div class="step-number">02</div><h3>Trouvez un réparateur proche</h3></div>
-        <p>Consultez les profils vérifiés, les avis clients et la proximité sur la carte.</p>
         <div class="demo-card map-demo"><div class="map-surface"><span class="map-pin pin-one">●</span><span class="map-pin pin-two">●</span><b>Dakar</b><small>Votre position</small></div><div class="map-profile"><span class="mini-avatar">⚒</span><span><b>Mamadou Fall</b><small>★ 4.9 · 1.2 km</small></span><em>Disponible</em></div></div>
       </article>
       <div class="step-line" aria-hidden="true">→</div>
       <article class="how-step">
         <div class="step-heading"><div class="step-number">03</div><h3>Échangez et planifiez</h3></div>
-        <p>Discutez avec le réparateur et choisissez le créneau qui vous convient.</p>
-        <div class="demo-card appointment-demo"><div class="demo-top"><b>▣　Intervention</b><span>⋯</span></div><div class="accepted">●　 Demande acceptée</div><div class="appointment-row">▣　Aujourd'hui · 15:30 <span>›</span></div><div class="message-row"><span class="mini-avatar">•••</span><b>Mamadou Fall</b><small>Je confirme votre demande.</small></div><div class="demo-button">→　 Suivre l’intervention</div></div>
+        <div class="demo-card appointment-demo"><div class="demo-top"><span>⋯</span></div><div class="accepted">●　 Demande acceptée</div><div class="appointment-row">▣　Aujourd'hui · 15:30 <span>›</span></div><div class="message-row"><span class="mini-avatar">•••</span><b>Mamadou Fall</b><small>Je confirme votre demande.</small></div><div class="demo-button">→　 Suivre l’intervention</div></div>
       </article>
     </div>
 
@@ -48,13 +45,13 @@ onBeforeUnmount(() => observer?.disconnect())
 
 <style scoped>
 .how-section {
-  padding: 130px max(7%, 52px) 140px;
+  padding: 82px max(7%, 52px) 140px;
   background: #fff;
   color: #123f45;
   text-align: center;
 }
 
-.how-heading { max-width: 720px; margin: 0 auto 88px; opacity: 0; transform: translate3d(0, 22px, 0); transition: opacity .65s ease, transform .65s ease; }
+.how-heading { max-width: 720px; margin: 0 auto var(--home-title-content-gap, 64px); opacity: 0; transform: translate3d(0, 22px, 0); transition: opacity .65s ease, transform .65s ease; }
 .is-visible .how-heading { opacity: 1; transform: translate3d(0, 0, 0); }
 .eyebrow { color: #087f70; font-size: 10px; font-weight: 800; letter-spacing: 1.2px; }
 .how-heading h2 { margin: 14px 0 16px; font-size: clamp(30px, 4vw, 48px); line-height: 1.12; }
@@ -70,6 +67,7 @@ onBeforeUnmount(() => observer?.disconnect())
 .step-number { display: grid; flex: none; width: 46px; height: 46px; place-items: center; border-radius: 50%; background: #087f70; color: #fff; font-size: 16px; font-weight: 800; }
 .how-step h3 { margin: 0; color: #123f45; font-size: 16px; line-height: 1.25; }
 .how-step > p { min-height: 40px; margin: 14px 0 14px 61px; color: #748197; font-size: 11px; line-height: 1.5; text-align: left; }
+.demo-card { margin-top: 18px; }
 .step-line { align-self: center; margin-top: 70px; color: #087f70; font-size: 30px; font-weight: 300; opacity: 0; transform: translate3d(-10px, 0, 0); transition: opacity .5s ease, transform .5s ease; }
 .is-visible .step-line { opacity: 1; transform: translate3d(0, 0, 0); }
 .demo-card { min-height: 185px; padding: 14px; border: 1px solid #d7ebe7; border-radius: 9px; background: #fff; box-shadow: 0 8px 22px #174b5010; color: #174b50; text-align: left; }
@@ -96,8 +94,8 @@ onBeforeUnmount(() => observer?.disconnect())
 .how-action:hover { background: #076b64; }
 .how-action span { font-size: 18px; line-height: 10px; }
 @media (max-width: 800px) {
-  .how-section { padding: 92px 24px 100px; }
-  .how-heading { margin-bottom: 58px; }
+  .how-section { padding: 64px 24px 100px; }
+  .how-heading { margin-bottom: var(--home-title-content-gap, 48px); }
   .how-steps { display: block; max-width: 420px; }
   .how-step { margin-bottom: 28px; }
   .step-heading { gap: 12px; }

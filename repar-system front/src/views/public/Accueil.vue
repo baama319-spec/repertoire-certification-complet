@@ -7,13 +7,22 @@ import SectionUnivers from '../../components/public/SectionUnivers.vue'
 import SectionCommentCaMarche from '../../components/public/SectionCommentCaMarche.vue'
 import CarteReparateur from '../../components/public/CarteReparateur.vue'
 import { chargerReparateursPublics } from '../../services/serviceReparateursPublics'
-import imageBanniere1 from '../../assets/images/image copy.png'
 import imageBanniere2 from '../../assets/images/image copy 2.png'
 import imageBanniere3 from '../../assets/images/image copy 3.png'
 import imageBanniere4 from '../../assets/images/image.png'
+import fondServices from '../../assets/images/image copy 4.png'
 
-const categories=[['ϟ','Électricité'],['♨','Plomberie'],['◉','Électroménager'],['≋','Climatisation'],['▱','Informatique'],['▯','Téléphonie']]
-const imagesBanniere = [imageBanniere1, imageBanniere2, imageBanniere3, imageBanniere4]
+const videoAccueil = new URL('../../assets/images/Réparateur_répare_ordinateur_à_D…_20260929012113.mp4', import.meta.url).href
+
+const categories = [
+	{ label: 'Électricité', icon: 'bolt' },
+	{ label: 'Plomberie', icon: 'water' },
+	{ label: 'Électroménager', icon: 'appliance' },
+	{ label: 'Climatisation', icon: 'climate' },
+	{ label: 'Informatique', icon: 'computer' },
+	{ label: 'Téléphonie', icon: 'phone' }
+]
+const imagesBanniere = [imageBanniere2, imageBanniere3, imageBanniere4]
 const slideActif = ref(0)
 const reparateurs = ref([])
 const chargementReparateurs = ref(true)
@@ -30,10 +39,11 @@ onBeforeUnmount(() => {
 	if (intervalId) clearInterval(intervalId)
 })
 </script>
-<template><div class="home-page"><EntetePublic/></div><main><section class="hero"><div class="hero-bg"><div class="hero-gallery" aria-hidden="true"><img v-for="(image, index) in imagesBanniere" :key="`gallery-${image}`" :src="image" class="hero-gallery-image" :style="{ '--i': index, '--n': imagesBanniere.length }" alt="" /></div></div><div class="hero-side-image-carousel"><img v-for="(image, index) in imagesBanniere" :key="image" :src="image" :class="{ active: index === slideActif }" class="hero-side-image" alt="Réparateur en action" /></div><div class="hero-content"><h1>Trouvez le bon <em>réparateur</em><br>au bon prix près de<br>chez vous.</h1><p>Découvrez votre problème ou trouvez simplement un professionnel habile et vérifié près de chez vous en quelques clics.</p><BarreRecherche/></div></section><SectionUnivers/><section class="categories"><span class="eyebrow">NOS SERVICES</span><h2>Que souhaitez-vous réparer ?</h2><div class="category-grid"><div v-for="cat in categories" :key="cat[1]" class="category"><b>{{cat[0]}}</b><span>{{cat[1]}}</span></div></div></section><section class="featured-pros" aria-labelledby="featured-pros-title"><div class="featured-heading"><div><h2 id="featured-pros-title">À votre service.</h2></div><RouterLink to="/reparateurs" class="featured-link">Voir tous les réparateurs <span>→</span></RouterLink></div><p v-if="chargementReparateurs" class="featured-state">Recherche des professionnels disponibles…</p><p v-else-if="!reparateurs.length" class="featured-state">Les profils vérifiés arrivent bientôt.</p><div v-else class="featured-grid"><CarteReparateur v-for="(reparateur, index) in reparateurs" :key="reparateur.id" :person="reparateur" :style="{ '--delay': `${index * 100}ms` }" /></div></section><SectionCommentCaMarche/></main><PiedDePage/></template>
+<template><div class="home-page"><EntetePublic/></div><main><section class="hero"><video class="hero-video" :src="videoAccueil" autoplay muted loop playsinline preload="metadata" aria-label="Vidéo de réparation en arrière-plan"></video><div class="hero-video-overlay"><span class="hero-video-dot"></span> Réparation en direct</div><div class="hero-bg"></div><div class="hero-content"><h1>Trouvez le bon <em>réparateur</em><br>au bon prix près de<br>chez vous.</h1><p>Découvrez votre problème ou trouvez simplement un professionnel habile et vérifié près de chez vous en quelques clics.</p><BarreRecherche/></div></section><SectionUnivers/><section class="featured-pros" aria-labelledby="featured-pros-title"><div class="featured-heading"><div><h2 id="featured-pros-title">À votre service.</h2></div><RouterLink to="/reparateurs" class="featured-link">Voir tous les réparateurs <span>→</span></RouterLink></div><p v-if="chargementReparateurs" class="featured-state">Recherche des professionnels disponibles…</p><p v-else-if="!reparateurs.length" class="featured-state">Les profils vérifiés arrivent bientôt.</p><div v-else class="featured-grid"><CarteReparateur v-for="(reparateur, index) in reparateurs" :key="reparateur.id" :person="reparateur" :style="{ '--delay': `${index * 100}ms` }" /></div></section><section class="categories"><span class="eyebrow">NOS SERVICES</span><h2>Que souhaitez-vous réparer ?</h2><div class="category-grid"><div v-for="cat in categories" :key="cat.label" class="category"><span class="category-icon"><svg v-if="cat.icon === 'bolt'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 13h6l-1 9 9-11h-6l1-9Z"/></svg><svg v-else-if="cat.icon === 'water'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5C14.4 5.8 18 8.5 18 12.8A6 6 0 0 1 6 12.8c0-4.3 3.6-7 6-10.3Z"/><path d="M9.5 14.2c.7 1.1 1.3 1.8 2.5 1.8 1.2 0 1.8-.7 2.5-1.8"/></svg><svg v-else-if="cat.icon === 'appliance'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="9" rx="2"/><path d="M8 19h8"/><path d="M9 12v7"/><path d="M15 12v7"/><path d="M7 7h10"/></svg><svg v-else-if="cat.icon === 'climate'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3"/><path d="M12 19v3"/><path d="M4.93 4.93l2.12 2.12"/><path d="M16.95 16.95l2.12 2.12"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.93 19.07l2.12-2.12"/><path d="M16.95 7.05l2.12-2.12"/><circle cx="12" cy="12" r="4.5"/></svg><svg v-else-if="cat.icon === 'computer'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="11" rx="2"/><path d="M8 20h8"/><path d="M12 15v5"/></svg><svg v-else-if="cat.icon === 'phone'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10 18h4"/></svg></span><span class="category-label">{{cat.label}}</span></div></div></section><SectionCommentCaMarche/></main><PiedDePage/></template>
 
 <style scoped>
 main {
+	--home-title-content-gap: 80px;
 	background: #f7fbfc;
 }
 
@@ -53,15 +63,26 @@ main > section + section {
 	justify-content: space-between;
 	gap: 18px;
 	background: #0b1427;
-	min-height: 650px;
+	min-height: 730px;
 	padding: 34px 0 42px;
+}
+
+.hero-video {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	filter: saturate(1.1) contrast(1.08);
 }
 
 .hero-bg {
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(90deg, rgba(6,29,47,.75) 0%, rgba(6,29,47,.48) 28%, rgba(6,29,47,.12) 58%, rgba(6,29,47,.08) 100%);
-	 isolation: isolate;
+	background: linear-gradient(90deg, rgba(6,29,47,.78) 0%, rgba(6,29,47,.58) 30%, rgba(6,29,47,.18) 60%, rgba(6,29,47,.06) 100%);
+	z-index: 1;
+	isolation: isolate;
 }
 
 @property --k {
@@ -117,61 +138,122 @@ main > section + section {
 
 .hero-content {
 	position: relative;
-	z-index: 1;
+	z-index: 2;
 	flex: 1;
 	max-width: 760px;
 	padding-left: 18px;
 	margin-left: 0;
-	padding-top: 92px;
+	padding-top: 120px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	margin: 0 auto;
+	padding-bottom: 24px;
 }
 
-.hero-side-image-carousel {
-	position: relative;
-	z-index: 1;
-	width: min(42vw, 560px);
-	height: 500px;
-	margin-right: max(2.5%, 28px);
-	margin-left: auto;
-	align-self: center;
-	transform: translateY(6px);
-	border-radius: 0 22px 22px 0;
-	overflow: hidden;
-	box-shadow: 0 18px 40px rgba(11, 21, 43, 0.18);
-}
-
-.hero-side-image {
+.hero-video-overlay {
 	position: absolute;
-	inset: 0;
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	opacity: 0;
-	transition: opacity 0.6s ease-in-out;
+	left: 16px;
+	bottom: 16px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border: 1px solid rgba(255,255,255,0.22);
+	border-radius: 999px;
+	background: rgba(7, 17, 30, 0.52);
+	backdrop-filter: blur(6px);
+	color: #edf8ff;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	z-index: 2;
 }
 
-.hero-side-image.active {
-	opacity: 1;
+.hero-video-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #5fe5c8;
+	box-shadow: 0 0 0 4px rgba(95, 229, 200, 0.22);
 }
 
 .categories {
-	background: #edf3f8;
+	background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.72)), url('../../assets/images/image copy 4.png') center/cover no-repeat;
 	padding: 82px max(7%, 52px) 132px;
 }
 
 .categories .eyebrow {
 	font-size: 10px;
-	letter-spacing: 1.2px;
+	letter-spacing: 1.4px;
+	color: #76f5e4;
 }
 
 .categories h2 {
-	margin: 16px 0 56px;
+	margin: 16px 0 var(--home-title-content-gap);
 	font-size: clamp(30px, 4vw, 48px);
 	line-height: 1.12;
 	letter-spacing: 0;
+	color: #fff;
+}
+
+.category-grid {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 1fr));
+	gap: 26px;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.category {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 18px;
+	min-height: 200px;
+	padding: 26px 18px 22px;
+	border: 1px solid rgba(255, 255, 255, 0.16);
+	border-radius: 16px;
+	background: rgba(255, 255, 255, 0.08);
+	box-shadow: 0 14px 28px rgba(0, 0, 0, 0.18);
+	backdrop-filter: blur(3px);
+	transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.category:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 18px 30px rgba(0, 0, 0, 0.22);
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.category-icon {
+	display: grid;
+	place-items: center;
+	width: 74px;
+	height: 74px;
+	border-radius: 18px;
+	background: rgba(138, 246, 224, 0.12);
+	color: #76f5e4;
+}
+
+.category-icon svg {
+	width: 34px;
+	height: 34px;
+}
+
+.category-label {
+	font-size: 15px;
+	font-weight: 600;
+	color: #f7fcff;
+	text-align: center;
 }
 
 .featured-pros {
-	padding: 112px max(7%, 52px) 126px;
+	padding: 72px max(5%, 40px) 126px;
 	background: #f7fbfc;
 }
 
@@ -183,14 +265,14 @@ main > section + section {
 	justify-content: center;
 	justify-content: space-between;
 	gap: 30px;
-	margin: 0 auto 34px;
+	margin: 0 auto var(--home-title-content-gap);
 }
 
 .featured-heading > div { width: 100%; text-align: center; }
 
 .featured-heading h2 {
 	max-width: 570px;
-	margin: 12px auto 9px;
+	margin: 0 auto;
 	color: #102a52;
 	font-size: clamp(30px, 4vw, 48px);
 	line-height: 1.05;
@@ -219,12 +301,26 @@ main > section + section {
 
 .featured-link:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(8,127,112,.12); }
 .featured-link span { margin-left: 8px; font-size: 16px; }
-.featured-grid { max-width: 1180px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin: 0 auto; }
+.featured-grid { max-width: 1280px; display: flex !important; flex-wrap: nowrap; gap: 20px; margin: 0 auto; overflow-x: auto; padding: 4px 2px 16px; scroll-snap-type: x mandatory; }
+.featured-grid :deep(.pro-card) { flex: 0 0 calc((100% - 100px) / 6); min-width: 0; scroll-snap-align: start; }
+.featured-grid :deep(.photo) { height: 138px; }
+.featured-grid :deep(.card-content) { padding: 13px 12px 14px; }
+.featured-grid :deep(.name-score h3) { font-size: 12px; }
+.featured-grid :deep(.name-score strong) { font-size: 9px; }
+.featured-grid :deep(.company), .featured-grid :deep(.location) { font-size: 9px; }
+.featured-grid :deep(.tags) { gap: 4px; margin-top: 9px; }
+.featured-grid :deep(.tags span) { padding: 5px; font-size: 6px; }
+.featured-grid :deep(.profile-button) { height: 36px; margin-top: 12px; }
 .featured-grid :deep(.pro-card) { opacity: 0; animation: featured-card-in .55s cubic-bezier(.2,.75,.25,1) var(--delay) forwards; }
 .featured-state { max-width: 1180px; margin: 0 auto; padding: 28px; border: 1px dashed #cfe1e5; border-radius: 12px; color: #73879a; background: #fff; text-align: center; font-size: 12px; }
 @keyframes featured-card-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
+@media (max-width: 1200px) {
+	.featured-grid :deep(.pro-card) { flex-basis: 220px; }
+}
+
 @media (max-width: 900px) {
+	main { --home-title-content-gap: 64px; }
 	main > section + section { margin-top: 18px; }
 
 	.hero {
@@ -247,23 +343,24 @@ main > section + section {
 	.hero-side-image-carousel {
 		display: block;
 		width: min(82vw, 480px);
-		height: 320px;
+		height: 380px;
 		margin: 22px auto 0;
 		border-radius: 18px;
 	}
 
 	.featured-heading { display: block; text-align: center; }
 	.featured-link { position: static; display: inline-block; margin-top: 22px; }
-	.featured-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 600px) {
+	main { --home-title-content-gap: 52px; }
 	.categories h2 {
-		margin-bottom: 40px;
 		font-size: 34px;
 	}
-	.featured-pros { padding: 76px 20px 82px; }
-	.featured-grid { grid-template-columns: 1fr; gap: 16px; }
+	.featured-pros { padding: 56px 20px 82px; }
+	.featured-grid { gap: 16px; }
+	.featured-grid :deep(.pro-card) { flex-basis: min(76vw, 280px); }
+	.featured-grid :deep(.photo) { height: 155px; }
 }
 
 </style>

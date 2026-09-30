@@ -1,26 +1,26 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import EntetePublic from '../../components/public/EntetePublic.vue'
 import PiedDePage from '../../components/public/PiedDePage.vue'
 import CarteProximite from '../../components/public/CarteProximite.vue'
+import { RouterLink } from 'vue-router'
 import {
   analyserDiagnostic,
   chargerReferentielsDiagnostic,
   chargerReparateursProches,
-  creerDemandeDepuisDiagnostic,
-  trouverLocalisation,
   trouverSpecialite,
 } from '../../services/serviceDiagnostic'
 
-const formulaire = ref({ materiel: 'Smartphone', description: '', lieu: 'Dakar' })
+const formulaire = ref({ materiel: 'Smartphone', modele: '', description: '', lieu: 'Dakar' })
+const route = useRoute()
 const analyseLancee = ref(false)
 const analyseEnCours = ref(false)
-const demandeEnCours = ref(false)
 const erreur = ref('')
-const message = ref('')
 const diagnostic = ref(null)
 const localisations = ref([])
 const specialites = ref([])
+const referentielsEnCours = ref(true)
 const reparateurs = ref([])
 const position = ref(null)
 const localisationEnCours = ref(false)
@@ -82,7 +82,6 @@ const activerLocalisation = () => {
 
 const lancerAnalyse = async () => {
   erreur.value = ''
-  message.value = ''
   analyseEnCours.value = true
   try {
     diagnostic.value = await analyserDiagnostic({
@@ -99,27 +98,6 @@ const lancerAnalyse = async () => {
   }
 }
 
-const confirmerDemande = async () => {
-  erreur.value = ''
-  message.value = ''
-  demandeEnCours.value = true
-  try {
-    const localisation = trouverLocalisation(localisations.value, formulaire.value.lieu)
-    if (!localisation) throw new Error('Aucune zone active ne correspond à cette ville.')
-    const specialite = trouverSpecialite(specialites.value, diagnostic.value.specialite)
-    await creerDemandeDepuisDiagnostic({
-      description: formulaire.value.description,
-      localisation: localisation.id,
-      specialite: specialite?.id,
-    })
-    message.value = 'Votre demande a été envoyée. Un réparateur pourra bientôt vous répondre.'
-  } catch (error) {
-    erreur.value = error.message
-  } finally {
-    demandeEnCours.value = false
-  }
-}
-
 const recommencer = () => {
   analyseLancee.value = false
   diagnostic.value = null
@@ -127,7 +105,6 @@ const recommencer = () => {
   position.value = null
   localisationActive.value = false
   erreur.value = ''
-  message.value = ''
 }
 
 onMounted(async () => {
@@ -138,24 +115,30 @@ onMounted(async () => {
     if (!villesDisponibles.value.includes(formulaire.value.lieu) && villesDisponibles.value.length) {
       formulaire.value.lieu = villesDisponibles.value[0]
     }
-  } catch (_) {
-    // Les référentiels ne bloquent pas l'analyse ; ils sont requis seulement à la confirmation.
+  } catch (error) {
+    erreur.value = error.message
+  } finally {
+    referentielsEnCours.value = false
   }
 })
 </script>
 
 <template>
-  <EntetePublic />
+  <div class="home-page"><EntetePublic /></div>
   <main>
     <section class="workspace" aria-label="Formulaire de diagnostic">
       <div v-if="!analyseLancee" class="form-card">
         <div class="card-heading"><div><h2>Parlez-nous de votre appareil</h2></div></div>
+        <p v-if="route.query.reparateur" class="field-hint">Votre demande sera transmise au réparateur dont vous consultez le profil.</p>
         <div class="field-block"><label>De quel appareil s’agit-il ?</label><div class="choice-grid"><button v-for="type in ['Smartphone', 'Ordinateur', 'Tablette', 'Télévision']" :key="type" type="button" :class="['choice', { selected: formulaire.materiel === type }]" @click="formulaire.materiel = type"><span class="choice-icon">{{ type === 'Smartphone' ? '▯' : type === 'Ordinateur' ? '▱' : type === 'Tablette' ? '▯' : '▭' }}</span>{{ type }}</button></div></div>
+        <div class="field-block"><label for="modele">Marque et modèle <small>(facultatif)</small></label><input id="modele" v-model.trim="formulaire.modele" maxlength="80" placeholder="Ex. Samsung Galaxy S21"></div>
         <div class="field-block"><label for="description">Que se passe-t-il ?</label><textarea id="description" v-model.trim="formulaire.description" placeholder="Exemple : mon téléphone est tombé, l’écran s’allume mais le tactile ne répond plus..." rows="5"></textarea><span class="field-hint">Décrivez les symptômes, même simplement. Minimum 10 caractères.</span></div>
         <div class="details-row location-only"><div class="field-block"><label for="lieu">Où êtes-vous ?</label><select id="lieu" v-model="formulaire.lieu"><option v-for="ville in villesDisponibles" :key="ville" :value="ville">{{ ville }}</option></select></div></div>
         <p v-if="localisationErreur" class="error-message" role="alert">{{ localisationErreur }}</p>
         <p v-if="erreur" class="error-message" role="alert">{{ erreur }}</p>
-        <button class="main-action" type="button" :disabled="analyseEnCours || formulaire.description.length < 10" @click="lancerAnalyse">{{ analyseEnCours ? 'Analyse en cours…' : 'Lancer mon diagnostic' }} <span>→</span></button>
+        <p v-if="referentielsEnCours" class="field-hint">Chargement des zones d’intervention…</p>
+        <button class="main-action" type="button" :disabled="analyseEnCours || formulaire.description.length < 10" @click="lancerAnalyse">{{ analyseEnCours ? 'Analyse en cours…' : 'Lancer mon diagnostic IA' }} <span>→</span></button>
+        <RouterLink class="diagnostic-action" :to="{ name: 'demande-reparation', query: route.query.reparateur ? { reparateur: route.query.reparateur } : {} }">Demander une intervention sans diagnostic</RouterLink>
         <p class="privacy-note">Vos informations restent privées et servent uniquement à vous orienter.</p>
       </div>
 
@@ -169,8 +152,8 @@ onMounted(async () => {
         </section>
         <section class="recommendations"><div class="recommendation-heading"><div><span class="kicker">ÉTAPE SUIVANTE</span><h2>Les réparateurs pour vous aider</h2><p>Une sélection basée sur votre diagnostic et votre position.</p></div><button v-if="!localisationActive" class="location-primary" type="button" @click="activerLocalisation">Activer ma localisation <span>⌖</span></button></div><p v-if="localisationErreur" class="error-message" role="alert">{{ localisationErreur }}</p><p v-else-if="!localisationActive" class="location-help">Activez votre position pour voir les professionnels compatibles les plus proches.</p><p v-else-if="!reparateurs.length" class="location-help">Aucun réparateur vérifié et géolocalisé ne correspond encore à cette spécialité.</p><CarteProximite v-else class="diagnostic-map" :professionals="reparateursPourCarte" :initial-position="position" :auto-locate="false" /></section>
         <section class="result-actions">
-        <p v-if="erreur" class="error-message" role="alert">{{ erreur }}</p><p v-if="message" class="success-message" role="status">{{ message }}</p>
-        <button v-if="!message" class="main-action" type="button" :disabled="demandeEnCours" @click="confirmerDemande">{{ demandeEnCours ? 'Envoi en cours…' : 'Confirmer et envoyer ma demande' }} <span>→</span></button>
+        <p v-if="erreur" class="error-message" role="alert">{{ erreur }}</p>
+        <RouterLink class="main-action request-link" :to="{ name: 'demande-reparation', query: route.query.reparateur ? { reparateur: route.query.reparateur } : {} }">Faire une demande d’intervention <span>→</span></RouterLink>
         <button class="restart-action" type="button" @click="recommencer">Recommencer un diagnostic</button>
         </section>
       </div>
@@ -181,7 +164,17 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.home-page :deep(.header) { background: #0b1427; color: #fff; border-bottom-color: rgba(255,255,255,.12); }
+.home-page :deep(.header a) { color: #fff; }
+.home-page :deep(.header .brand-mark) { color: #fff; }
+.home-page :deep(.header .signup) { background: #087f70; color: #fff; }
 main { background: #f7f8f5; color: #102b3b; }
+.field-block input { width: 100%; box-sizing: border-box; border: 1px solid #dbe7e4; border-radius: 10px; padding: 14px; color: #284750; background: #fbfdfc; font: inherit; font-size: 13px; outline: none; }
+.field-block input:focus { border-color: #168273; }
+.diagnostic-action { display: block; margin: 15px auto 0; padding: 8px 12px; border: 0; background: transparent; color: #168273; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.request-link { display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
+.diagnostic-action:disabled { opacity: .55; cursor: wait; }
+.success-message { margin: 14px 0; padding: 13px 16px; border-radius: 9px; background: #e9f7f1; color: #147665; font-size: 13px; line-height: 1.5; }
 .intro { min-height: 430px; padding: 78px max(9vw, 32px) 58px; background: #dcefe9; display: flex; justify-content: space-between; align-items: center; overflow: hidden; }
 .intro-copy { max-width: 650px; position: relative; z-index: 1; }
 .kicker { color: #168273; font-size: 10px; font-weight: 800; letter-spacing: 1.6px; }
@@ -207,7 +200,7 @@ h1, h2, h3, p { margin-top: 0; }
 @media (prefers-reduced-motion: reduce) { .form-card, .result-card, .answer, .questions, .error-message, .success-message { animation: none; transition: none; } }
 @media (max-width: 720px) { .workspace { width: auto; margin: 0 14px; padding: 38px 0 55px; }.form-card, .result-card { padding: 28px 20px; }.result-heading h2 { font-size: 30px; }.confidence { padding: 9px 12px; }.diagnostic-map :deep(.proximity-layout) { display: block; }.diagnostic-map :deep(.proximity-filters) { border-right: 0; }.diagnostic-map :deep(.senegal-map) { min-height: 340px; }.diagnostic-map :deep(.nearby-list) { display: block; } }
 .results-stack { display: grid; gap: 22px; animation: page-enter .55s cubic-bezier(.2,.75,.25,1) both; }.diagnostic-section { animation: none; }.recommendations { margin: 0; padding: 30px 34px 34px; border: 1px solid #dfece8; border-radius: 16px; background: linear-gradient(145deg, #f8fcfb 0%, #eef8f5 100%); box-shadow: 0 16px 38px rgba(21,70,74,.07); }.recommendation-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 8px; }.recommendation-heading h2 { margin: 7px 0 5px; color: #102b3b; font-size: clamp(23px, 2.4vw, 31px); letter-spacing: -.7px; }.recommendation-heading p { margin: 0; color: #70898a; font-size: 12px; }.location-primary { flex: 0 0 auto; padding: 12px 16px; border: 1px solid #b8d8d0; border-radius: 9px; background: #fff; color: #168273; font: inherit; font-size: 11px; font-weight: 800; cursor: pointer; box-shadow: 0 7px 17px rgba(22,130,115,.1); transition: transform .2s ease, box-shadow .2s ease; }.location-primary:hover { transform: translateY(-2px); box-shadow: 0 11px 22px rgba(22,130,115,.16); }.recommendations .location-help { margin: 12px 0 0; padding: 13px 15px; border-radius: 9px; background: rgba(255,255,255,.65); }.recommendations .diagnostic-map { display: block; margin-top: 20px; }.result-actions { display: grid; gap: 5px; padding: 0 12px; }.result-actions .main-action { max-width: 640px; margin: 0 auto; }.result-actions .restart-action { margin-top: 8px; }
-.workspace { width: min(100% - 56px, 1180px); }.diagnostic-section, .result-actions { position: relative; }main { background: #071d35; background-image: radial-gradient(circle at 50% 0%, #12395a 0, #071d35 42%, #051426 100%); }.progress-line { color: #afc2ce; }.progress-step.active { color: #54c8b5; }.progress-step.active b { color: #54c8b5; }.diagnostic-section { background: #fff; box-shadow: 0 24px 55px rgba(0,0,0,.22); }.results-stack { gap: 20px; }.recommendations { background: linear-gradient(145deg, #edf5f3 0%, #e0ebe9 100%); }
+.workspace { width: min(100% - 56px, 1180px); }.diagnostic-section, .result-actions { position: relative; }main { background: #102c49; background-image: radial-gradient(ellipse at 50% 0%, #214767 0, #102c49 48%, #0b2038 100%); }.progress-line { color: #afc2ce; }.progress-step.active { color: #54c8b5; }.progress-step.active b { color: #54c8b5; }.diagnostic-section { background: #fff; box-shadow: 0 24px 55px rgba(0,0,0,.22); }.results-stack { gap: 20px; }.recommendations { background: linear-gradient(145deg, #edf5f3 0%, #e0ebe9 100%); }
 .workspace { width: min(100% - 48px, 1040px); }.form-card, .result-card { padding: 44px 40px 38px; border-radius: 18px; }.form-card { padding-top: 48px; }.card-heading { margin-bottom: 48px; }.card-heading h2 { font-size: 31px; line-height: 1.15; }.field-block { margin-bottom: 34px; }.field-block > label:first-child { margin-bottom: 14px; }.choice-grid { gap: 14px; }.choice { min-height: 102px; padding: 18px 10px; }.choice-icon { margin-bottom: 11px; }.field-block textarea, select { padding: 17px; }.field-hint { margin-top: 10px; }.details-row { gap: 30px; margin-top: 6px; }.location-only { grid-template-columns: 1fr; }.main-action { display: block; margin: 10px auto 0; padding: 18px 20px; max-width: 580px !important; }.privacy-note { margin-top: 18px; }.diagnostic-section { border-color: rgba(255,255,255,.75); box-shadow: 0 25px 65px rgba(0,0,0,.28); }.result-heading h2 { max-width: 590px; font-size: clamp(28px, 3vw, 38px); }.answer-grid { grid-template-columns: repeat(3, 1fr); gap: 11px; }.answer { min-height: 112px; border-radius: 14px; background: #f7fbfa; }.answer-main { background: #e5f6f0; border-color: #d5eee7; }.questions { background: #fffaf2; box-shadow: inset 3px 0 #e79b55; }.recommendations { padding: 28px 28px 30px; border-radius: 18px; box-shadow: 0 20px 50px rgba(0,0,0,.16); }.recommendation-heading h2 { font-size: clamp(22px, 2.4vw, 29px); }.diagnostic-map :deep(.proximity-layout) { grid-template-columns: 135px minmax(250px, 1fr) 215px; }.result-actions { padding: 0 8px; }
 @media (max-width: 720px) { .recommendations { padding: 24px 18px 22px; }.recommendation-heading { display: block; }.location-primary { margin-top: 16px; }.result-actions { padding: 0; } }
 </style>

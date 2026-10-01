@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from diagnostics.services import DiagnosticIAService
+
 
 class DiagnosticApiTests(APITestCase):
     url = "/api/ia/diagnostic/"
@@ -51,6 +53,13 @@ class DiagnosticApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["categorie"], "Électronique")
         post.assert_called_once()
+
+    def test_prompt_includes_safety_warning_for_self_repair(self):
+        prompt = DiagnosticIAService._prompt_system()
+
+        self.assertIn("professionnel du diagnostic", prompt)
+        self.assertIn("réparer", prompt)
+        self.assertIn("vous-même", prompt)
 
     @patch.dict("os.environ", {}, clear=True)
     def test_diagnostic_returns_service_unavailable_when_not_configured(self):

@@ -33,7 +33,7 @@ onMounted(() => {
 	intervalId = setInterval(() => {
 		slideActif.value = (slideActif.value + 1) % imagesBanniere.length
 	}, 3000)
-	chargerReparateursPublics().then((data) => { reparateurs.value = data.slice(0, 6) }).catch(() => {}).finally(() => { chargementReparateurs.value = false })
+	chargerReparateursPublics().then((data) => { reparateurs.value = data.slice(0, 5) }).catch(() => {}).finally(() => { chargementReparateurs.value = false })
 })
 
 onBeforeUnmount(() => {
@@ -322,7 +322,7 @@ main > section + section {
 }
 
 .featured-pros {
-	padding: 72px max(5%, 40px) 126px;
+	padding: 72px max(2.5%, 30px) 126px;
 	background: #f7fbfc;
 }
 
@@ -370,27 +370,27 @@ main > section + section {
 
 .featured-link:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(8,127,112,.12); }
 .featured-link span { margin-left: 8px; font-size: 16px; }
-.featured-grid { max-width: 1280px; display: flex !important; flex-wrap: nowrap; gap: 20px; margin: 0 auto; overflow-x: auto; padding: 4px 2px 16px; scroll-snap-type: x mandatory; }
-.featured-grid :deep(.pro-card) { flex: 0 0 calc((100% - 100px) / 6); min-width: 0; scroll-snap-align: start; }
-.featured-grid :deep(.photo) { height: 138px; }
-.featured-grid :deep(.card-content) { padding: 13px 12px 14px; }
-.featured-grid :deep(.name-score h3) { font-size: 12px; }
-.featured-grid :deep(.name-score strong) { font-size: 9px; }
-.featured-grid :deep(.company), .featured-grid :deep(.location) { font-size: 9px; }
-.featured-grid :deep(.tags) { gap: 4px; margin-top: 9px; }
-.featured-grid :deep(.tags span) { padding: 5px; font-size: 6px; }
-.featured-grid :deep(.profile-button) { height: 36px; margin-top: 12px; }
+.featured-grid { max-width: 1640px; display: flex !important; flex-wrap: nowrap; gap: 28px; margin: 0 auto; overflow-x: auto; padding: 4px 2px 16px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.featured-grid::-webkit-scrollbar { display: none; }
+.featured-grid :deep(.pro-card) { flex: 0 0 max(230px, calc((100% - 112px) / 5)); min-width: 0; scroll-snap-align: start; border: 1px solid rgba(255, 255, 255, .88); background: rgba(255, 255, 255, .74); backdrop-filter: blur(18px) saturate(155%); box-shadow: 0 10px 28px rgba(20, 47, 82, .10), inset 0 1px 0 rgba(255, 255, 255, .95); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.featured-grid :deep(.pro-card:hover) { transform: translateY(-6px); border-color: rgba(255, 255, 255, .98); box-shadow: 0 18px 38px rgba(20, 47, 82, .16), 0 0 0 1px rgba(255, 255, 255, .45), inset 0 1px 0 #fff; }
+.featured-grid :deep(.photo) { height: 171px; }
+.featured-grid :deep(.card-content) { padding: 14px 18px 17px; }
+.featured-grid :deep(.name-score h3) { font-size: 15px; }
+.featured-grid :deep(.name-score strong) { font-size: 11px; }
+.featured-grid :deep(.company), .featured-grid :deep(.location) { font-size: 10px; }
+.featured-grid :deep(.tags) { gap: 6px; margin-top: 16px; }
+.featured-grid :deep(.tags span) { padding: 5px 7px; font-size: 7px; }
+.featured-grid :deep(.profile-button) { height: 39px; margin-top: 16px; }
 .featured-grid :deep(.pro-card) { opacity: 0; animation: featured-card-in .55s cubic-bezier(.2,.75,.25,1) var(--delay) forwards; }
 .featured-state { max-width: 1180px; margin: 0 auto; padding: 28px; border: 1px dashed #cfe1e5; border-radius: 12px; color: #73879a; background: #fff; text-align: center; font-size: 12px; }
 @keyframes featured-card-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 
-@media (max-width: 1200px) {
-	.featured-grid :deep(.pro-card) { flex-basis: 220px; }
-}
-
 @media (max-width: 900px) {
 	main { --home-title-content-gap: 64px; }
 	main > section + section { margin-top: 18px; }
+	.featured-grid { gap: 24px; }
+	.featured-grid :deep(.pro-card) { flex-basis: 230px; }
 
 	.hero {
 		display: block;

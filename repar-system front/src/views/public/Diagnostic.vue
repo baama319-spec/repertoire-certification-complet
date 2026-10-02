@@ -165,7 +165,7 @@ onMounted(async () => {
 <style scoped>
 .home-page :deep(.header) { background: #0b1427; color: #fff; border-bottom-color: rgba(255,255,255,.12); }
 .home-page :deep(.header a) { color: #fff; }
-.home-page :deep(.header .brand-mark) { color: #fff; }
+.home-page :deep(.header .logo-reparsystem) { background: #fff; border-radius: 8px; padding: 3px; }
 .home-page :deep(.header .signup) { background: #087f70; color: #fff; }
 main { background: #f7f8f5; color: #102b3b; }
 .field-block input { width: 100%; box-sizing: border-box; border: 1px solid #dbe7e4; border-radius: 10px; padding: 14px; color: #284750; background: #fbfdfc; font: inherit; font-size: 13px; outline: none; }

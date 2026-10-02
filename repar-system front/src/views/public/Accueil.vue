@@ -4,7 +4,6 @@ import EntetePublic from '../../components/public/EntetePublic.vue'
 import PiedDePage from '../../components/public/PiedDePage.vue'
 import BarreRecherche from '../../components/public/BarreRecherche.vue'
 import SectionUnivers from '../../components/public/SectionUnivers.vue'
-import SectionCommentCaMarche from '../../components/public/SectionCommentCaMarche.vue'
 import CarteReparateur from '../../components/public/CarteReparateur.vue'
 import { chargerReparateursPublics } from '../../services/serviceReparateursPublics'
 import imageBanniere2 from '../../assets/images/image copy 2.png'
@@ -40,7 +39,7 @@ onBeforeUnmount(() => {
 	if (intervalId) clearInterval(intervalId)
 })
 </script>
-<template><div class="home-page"><EntetePublic/></div><main><section class="hero"><video class="hero-video" :src="videoAccueil" autoplay muted loop playsinline preload="metadata" aria-label="Vidéo de réparation en arrière-plan"></video><div class="hero-video-overlay"><span class="hero-video-dot"></span> Réparation en direct</div><div class="hero-bg"></div><div class="hero-content"><h1>Trouvez le bon <em>réparateur</em><br>au bon prix près de<br>chez vous.</h1><p>Découvrez votre problème ou trouvez simplement un professionnel habile et vérifié près de chez vous en quelques clics.</p><BarreRecherche/></div></section><SectionUnivers/><section class="featured-pros" aria-labelledby="featured-pros-title"><div class="featured-heading"><div><h2 id="featured-pros-title">À votre service.</h2></div><RouterLink to="/reparateurs" class="featured-link">Voir tous les réparateurs <span>→</span></RouterLink></div><p v-if="chargementReparateurs" class="featured-state">Recherche des professionnels disponibles…</p><p v-else-if="!reparateurs.length" class="featured-state">Les profils vérifiés arrivent bientôt.</p><div v-else class="featured-grid"><CarteReparateur v-for="(reparateur, index) in reparateurs" :key="reparateur.id" :person="reparateur" :style="{ '--delay': `${index * 100}ms` }" /></div></section><section class="categories"><span class="eyebrow">NOS SERVICES</span><h2>Que souhaitez-vous réparer ?</h2><div class="category-grid"><div class="services-visual-card"><img :src="decorServices" alt="Effet visuel d’animation" /></div><div v-for="(cat, index) in categories" :key="cat.label" class="category" :style="{ '--delay': `${index * 0.22}s` }"><span class="category-icon"><svg v-if="cat.icon === 'bolt'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 13h6l-1 9 9-11h-6l1-9Z"/></svg><svg v-else-if="cat.icon === 'water'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5C14.4 5.8 18 8.5 18 12.8A6 6 0 0 1 6 12.8c0-4.3 3.6-7 6-10.3Z"/><path d="M9.5 14.2c.7 1.1 1.3 1.8 2.5 1.8 1.2 0 1.8-.7 2.5-1.8"/></svg><svg v-else-if="cat.icon === 'appliance'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="9" rx="2"/><path d="M8 19h8"/><path d="M9 12v7"/><path d="M15 12v7"/><path d="M7 7h10"/></svg><svg v-else-if="cat.icon === 'climate'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3"/><path d="M12 19v3"/><path d="M4.93 4.93l2.12 2.12"/><path d="M16.95 16.95l2.12 2.12"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.93 19.07l2.12-2.12"/><path d="M16.95 7.05l2.12-2.12"/><circle cx="12" cy="12" r="4.5"/></svg><svg v-else-if="cat.icon === 'computer'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="11" rx="2"/><path d="M8 20h8"/><path d="M12 15v5"/></svg><svg v-else-if="cat.icon === 'phone'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10 18h4"/></svg></span><span class="category-label">{{cat.label}}</span></div></div></section><SectionCommentCaMarche/></main><PiedDePage/></template>
+<template><div class="home-page"><EntetePublic/></div><main><section class="hero"><video class="hero-video" :src="videoAccueil" autoplay muted loop playsinline preload="metadata" aria-label="Vidéo de réparation en arrière-plan"></video><div class="hero-video-overlay"><span class="hero-video-dot"></span> Réparation en direct</div><div class="hero-bg"></div><div class="hero-content"><h1>Trouvez le bon <em>réparateur</em><br>au bon prix près de<br>chez vous.</h1><p>Découvrez votre problème ou trouvez simplement un professionnel habile et vérifié près de chez vous en quelques clics.</p><BarreRecherche/></div></section><SectionUnivers/><section class="categories"><span class="eyebrow">NOS SERVICES</span><h2>Que souhaitez-vous réparer ?</h2><div class="category-grid"><div class="services-visual-card"><img :src="decorServices" alt="Effet visuel d’animation" /></div><div v-for="(cat, index) in categories" :key="cat.label" class="category" :style="{ '--delay': `${index * 0.22}s` }"><span class="category-icon"><svg v-if="cat.icon === 'bolt'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 13h6l-1 9 9-11h-6l1-9Z"/></svg><svg v-else-if="cat.icon === 'water'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5C14.4 5.8 18 8.5 18 12.8A6 6 0 0 1 6 12.8c0-4.3 3.6-7 6-10.3Z"/><path d="M9.5 14.2c.7 1.1 1.3 1.8 2.5 1.8 1.2 0 1.8-.7 2.5-1.8"/></svg><svg v-else-if="cat.icon === 'appliance'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="9" rx="2"/><path d="M8 19h8"/><path d="M9 12v7"/><path d="M15 12v7"/><path d="M7 7h10"/></svg><svg v-else-if="cat.icon === 'climate'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v3"/><path d="M12 19v3"/><path d="M4.93 4.93l2.12 2.12"/><path d="M16.95 16.95l2.12 2.12"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.93 19.07l2.12-2.12"/><path d="M16.95 7.05l2.12-2.12"/><circle cx="12" cy="12" r="4.5"/></svg><svg v-else-if="cat.icon === 'computer'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="11" rx="2"/><path d="M8 20h8"/><path d="M12 15v5"/></svg><svg v-else-if="cat.icon === 'phone'" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10 18h4"/></svg></span><span class="category-label">{{cat.label}}</span></div></div></section><section class="featured-pros" aria-labelledby="featured-pros-title"><div class="featured-heading"><div><h2 id="featured-pros-title">À votre service.</h2></div></div><p v-if="chargementReparateurs" class="featured-state">Recherche des professionnels disponibles…</p><p v-else-if="!reparateurs.length" class="featured-state">Les profils vérifiés arrivent bientôt.</p><div v-else class="featured-grid"><CarteReparateur v-for="(reparateur, index) in reparateurs" :key="reparateur.id" :person="reparateur" :style="{ '--delay': `${index * 100}ms` }" /></div></section><RouterLink to="/reparateurs" class="featured-link featured-link-bottom">Voir tous les réparateurs <span>→</span></RouterLink></main><PiedDePage/></template>
 
 <style scoped>
 main {
@@ -54,7 +53,7 @@ main > section + section {
 
 .home-page :deep(.header){background:#0b1427;color:#fff;border-bottom-color:rgba(255,255,255,.12)}
 .home-page :deep(.header a){color:#fff}
-.home-page :deep(.header .brand-mark){color:#fff}
+.home-page :deep(.header .logo-reparsystem){background:#fff;border-radius:8px;padding:3px}
 .home-page :deep(.header .signup){background:#087f70;color:#fff}
 .hero {
 	position: relative;
@@ -322,7 +321,7 @@ main > section + section {
 }
 
 .featured-pros {
-	padding: 72px max(2.5%, 30px) 126px;
+	padding: 72px max(2.5%, 30px) 36px;
 	background: #f7fbfc;
 }
 
@@ -356,8 +355,9 @@ main > section + section {
 
 .featured-link {
 	flex: none;
-	position: absolute;
-	right: 0;
+	position: static;
+	display: inline-block;
+	margin-top: 22px;
 	padding: 12px 15px;
 	border: 1px solid #c9e2df;
 	border-radius: 8px;
@@ -370,6 +370,7 @@ main > section + section {
 
 .featured-link:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(8,127,112,.12); }
 .featured-link span { margin-left: 8px; font-size: 16px; }
+.featured-link.featured-link-bottom { display: flex; width: max-content; position: static; margin: 24px auto 0; }
 .featured-grid { max-width: 1640px; display: flex !important; flex-wrap: nowrap; gap: 28px; margin: 0 auto; overflow-x: auto; padding: 4px 2px 16px; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .featured-grid::-webkit-scrollbar { display: none; }
 .featured-grid :deep(.pro-card) { flex: 0 0 max(230px, calc((100% - 112px) / 5)); min-width: 0; scroll-snap-align: start; border: 1px solid rgba(255, 255, 255, .88); background: rgba(255, 255, 255, .74); backdrop-filter: blur(18px) saturate(155%); box-shadow: 0 10px 28px rgba(20, 47, 82, .10), inset 0 1px 0 rgba(255, 255, 255, .95); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
@@ -418,7 +419,7 @@ main > section + section {
 	}
 
 	.featured-heading { display: block; text-align: center; }
-	.featured-link { position: static; display: inline-block; margin-top: 22px; }
+	.featured-link { position: static; }
 }
 
 @media (max-width: 600px) {
@@ -426,11 +427,13 @@ main > section + section {
 	.categories h2 {
 		font-size: 34px;
 	}
-	.featured-pros { padding: 56px 20px 82px; }
+	.featured-pros { padding: 56px 20px 36px; }
 	.featured-grid { gap: 16px; }
 	.featured-grid :deep(.pro-card) { flex-basis: min(76vw, 280px); }
 	.featured-grid :deep(.photo) { height: 155px; }
 }
+
+.featured-link.featured-link-bottom { display: flex; width: max-content; margin: 24px auto 0; }
 
 </style>
 

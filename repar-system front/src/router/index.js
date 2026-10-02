@@ -57,7 +57,8 @@ const lireUtilisateur = () => {
 router.beforeEach((to) => {
   const utilisateur = lireUtilisateur()
   const pageSansFooter = ['/connexion', '/inscription'].includes(to.path)
-  document.body.classList.toggle('page-no-footer', Boolean(utilisateur) && !pageSansFooter)
+  const footerPublicVisible = ['/', '/reparateurs'].includes(to.path)
+  document.body.classList.toggle('page-no-footer', Boolean(utilisateur) && !pageSansFooter && !footerPublicVisible)
 
   if (to.path.startsWith('/admin') && utilisateur?.role !== 'ADMINISTRATEUR') {
     return { path: '/connexion', query: { redirection: to.fullPath } }

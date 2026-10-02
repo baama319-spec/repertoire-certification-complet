@@ -1,0 +1,47 @@
+.administration .clients-page > .title > span,
+.administration .clients-page > .title p,
+.administration .page > .title > span,
+.administration .page > .title p,
+.administration .demandes > .title > span,
+.administration .demandes > .title p,
+.administration .page-card > .title .title-icon,
+.administration .page-card > .title p,
+.administration .zones-page > .page-title > span,
+.administration .zones-page > .page-title p {
+  display: none;
+}
+
+.administration .clients-page > .title {
+  min-height: 0;
+  gap: 0;
+  padding-bottom: 12px;
+}
+
+.administration .page > .title {
+  height: auto;
+  gap: 0;
+  padding-bottom: 16px;
+}
+
+.administration .demandes > .title {
+  height: auto;
+  gap: 0;
+  padding: 16px 23px;
+}
+
+.administration .page-card > .title {
+  padding-bottom: 16px;
+}
+
+.administration .zones-page > .page-title {
+  min-height: 0;
+  gap: 0;
+}
+
+.administration .table th,
+.administration .table-wrap th,
+.administration .request-table th,
+.administration .zone-table th {
+  background: #123252 !important;
+  color: #fff !important;
+}

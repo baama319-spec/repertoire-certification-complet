@@ -1,7 +1,7 @@
 <template>
   <div class="profile-page client-profile">
     <header class="topbar">
-      <RouterLink to="/" class="brand"><i>🛠</i><b>Repar<span>System</span></b></RouterLink>
+      <RouterLink to="/" class="brand"><MarqueDashboard role="Client" tone="dark" :size="40" :text-size="17" /></RouterLink>
       <label class="search">⌕ <input placeholder="Rechercher un réparateur, une spécialité, une zone..." /></label>
       <nav><RouterLink to="/">Accueil</RouterLink><RouterLink to="/reparateurs">Trouver un réparateur</RouterLink><a>Faire un diagnostic</a><a>Devenir réparateur</a><a>À propos</a></nav>
       <div class="account"><span class="bell">♟<b>3</b></span><EnteteClient /></div>
@@ -16,7 +16,7 @@
       <article class="danger"><i>▲</i><div></div><button>▣　 Supprimer mon compte</button></article>
     </main>
     <Teleport to="body"><div v-if="modal" class="modal-backdrop" @click.self="fermerModal"><form class="modal-profil" @submit.prevent="enregistrerModal"><header><span class="modal-icon">{{ modal === 'identite' ? '♙' : modal === 'coordonnees' ? '●' : '♢' }}</span><div><h2>{{ modal === 'identite' ? 'Modifier mes informations' : modal === 'coordonnees' ? 'Modifier mes coordonnées' : 'Modifier le mot de passe' }}</h2><p>Vos changements seront enregistrés uniquement après confirmation.</p></div><button type="button" class="fermer" aria-label="Fermer" @click="fermerModal">×</button></header><section v-if="modal === 'identite'" class="modal-champs"><label>Prénom<input v-model.trim="form.prenom" required></label><label>Nom<input v-model.trim="form.nom" required></label><label class="large">Adresse e-mail<input v-model.trim="form.email" type="email" required></label><label class="large">Téléphone<input v-model.trim="form.telephone" required></label></section><section v-else-if="modal === 'coordonnees'" class="modal-champs"><label class="large">Zone de résidence<select v-model="form.zone_residence" required><option value="" disabled>Sélectionnez votre zone</option><option v-for="zone in zones" :key="zone.id" :value="zone.id">{{ libelleZone(zone) }}</option></select></label><label class="large">Adresse principale<input v-model.trim="form.adresse_principale" placeholder="Rue, numéro, complément"></label></section><section v-else class="modal-champs"><label class="large">Mot de passe actuel<input v-model="motDePasse.actuel" type="password" required></label><label class="large">Nouveau mot de passe<input v-model="motDePasse.nouveau" type="password" minlength="8" required></label><label class="large">Confirmer le nouveau mot de passe<input v-model="motDePasse.confirmation" type="password" minlength="8" required></label></section><footer><button type="button" class="annuler" @click="fermerModal">Annuler</button><button class="enregistrer" :disabled="enregistrement">{{ enregistrement ? 'Enregistrement…' : 'Enregistrer les modifications' }}</button></footer></form></div></Teleport>
-    <footer><b><i>🛠</i> Repar<span>System</span></b><span>Réparez aujourd'hui, préservez demain.</span><nav><a>Aide</a><a>Confidentialité</a><a>Conditions d'utilisation</a></nav></footer>
+    <footer><b><LogoReparSystem :size="38"/> Repar<span>System</span></b><span>Réparez aujourd'hui, préservez demain.</span><nav><a>Aide</a><a>Confidentialité</a><a>Conditions d'utilisation</a></nav></footer>
   </div>
 </template>
 
@@ -24,6 +24,8 @@
 import { computed, onMounted, ref } from 'vue'
 import EnteteClient from '../../components/client/EnteteClient.vue'
 import Avatar from '../../components/commun/Avatar.vue'
+import LogoReparSystem from '../../components/commun/LogoReparSystem.vue'
+import MarqueDashboard from '../../components/commun/MarqueDashboard.vue'
 import { useAuthentification } from '../../services/serviceAuthentification'
 import { api } from '../../services/api'
 const { utilisateur, mettreAJourProfil, changerMotDePasse } = useAuthentification()

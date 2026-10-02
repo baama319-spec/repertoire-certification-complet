@@ -16,30 +16,27 @@ onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
-  <section ref="howSection" id="how" class="how-section" :class="{ 'is-visible': isVisible }" aria-labelledby="how-title">
-    <header class="how-heading">
-      <span class="eyebrow">COMMENT ÇA MARCHE</span>
-      <h2 id="how-title">Une réparation simple</h2>
-    </header>
+  <section ref="howSection" id="how" class="how-section" :class="{ 'is-visible': isVisible }" aria-label="Les avantages de ReparSystem">
+    <div class="feature-cards">
+      <article class="feature-card">
+        <span class="feature-label">SIMPLE & RAPIDE</span>
+        <div class="feature-art art-simple" aria-hidden="true"><span>01</span></div>
+        <div class="feature-copy"><h2>Votre panne,<br>en quelques mots.</h2><p>Décrivez votre appareil et le problème rencontré. Nous vous aidons à préciser votre besoin, sans démarches compliquées.</p></div>
+      </article>
 
-    <div class="how-steps">
-      <article class="how-step">
-        <div class="step-heading"><div class="step-number">01</div><h3>Décrivez votre besoin</h3></div>
-        <div class="demo-card search-demo"><div class="demo-top"><span>☰</span></div><strong>Que faut-il réparer ?</strong><div class="demo-field">▯　Écran de téléphone <span>⌄</span></div><div class="demo-field">●　Dakar Plateau <span>⌾</span></div><div class="demo-button">⌕　 Rechercher</div></div>
+      <article class="feature-card">
+        <span class="feature-label">DES EXPERTS PRÈS DE VOUS</span>
+        <div class="feature-art art-proximity" aria-hidden="true"><span>02</span></div>
+        <div class="feature-copy"><h2>Le bon réparateur,<br>au bon endroit.</h2><p>Comparez des profils de professionnels et trouvez un réparateur qualifié dans votre zone d’intervention.</p></div>
       </article>
-      <div class="step-line" aria-hidden="true">→</div>
-      <article class="how-step">
-        <div class="step-heading"><div class="step-number">02</div><h3>Trouvez un réparateur proche</h3></div>
-        <div class="demo-card map-demo"><div class="map-surface"><span class="map-pin pin-one">●</span><span class="map-pin pin-two">●</span><b>Dakar</b><small>Votre position</small></div><div class="map-profile"><span class="mini-avatar">⚒</span><span><b>Mamadou Fall</b><small>★ 4.9 · 1.2 km</small></span><em>Disponible</em></div></div>
-      </article>
-      <div class="step-line" aria-hidden="true">→</div>
-      <article class="how-step">
-        <div class="step-heading"><div class="step-number">03</div><h3>Échangez et planifiez</h3></div>
-        <div class="demo-card appointment-demo"><div class="demo-top"><span>⋯</span></div><div class="accepted">●　 Demande acceptée</div><div class="appointment-row">▣　Aujourd'hui · 15:30 <span>›</span></div><div class="message-row"><span class="mini-avatar">•••</span><b>Mamadou Fall</b><small>Je confirme votre demande.</small></div><div class="demo-button">→　 Suivre l’intervention</div></div>
+
+      <article class="feature-card feature-card-dark">
+        <span class="feature-label">UN SUIVI EN TOUTE CONFIANCE</span>
+        <div class="feature-art art-follow" aria-hidden="true"><span>03</span></div>
+        <div class="feature-copy"><h2>Votre réparation,<br>bien accompagnée.</h2><p>Échangez directement avec le professionnel, organisez l’intervention et retrouvez vos demandes depuis votre espace.</p></div>
       </article>
     </div>
-
-    <RouterLink class="how-action" to="/reparateurs">Commencer une recherche <span>→</span></RouterLink>
+    <RouterLink class="how-action" to="/reparateurs">Trouver un réparateur <span aria-hidden="true">↗</span></RouterLink>
   </section>
 </template>
 
@@ -106,5 +103,163 @@ onBeforeUnmount(() => observer?.disconnect())
 }
 @media (prefers-reduced-motion: reduce) {
   .how-heading, .how-step, .step-line, .how-action, .is-visible .how-heading, .is-visible .how-step, .is-visible .step-line, .is-visible .how-action { opacity: 1; transform: none; transition: none; }
+}
+
+.how-section {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 34px max(7%, 52px) 66px;
+  background: radial-gradient(ellipse at 50% 45%, #fff 0%, #f7fcfd 56%, #edf9fa 100%);
+  color: #142d43;
+}
+.how-section::before, .how-section::after {
+  position: absolute;
+  z-index: -1;
+  width: 340px;
+  height: 250px;
+  border: 1px solid #9be7ed88;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #6ed7df55, #a8eff000 70%);
+  content: '';
+  filter: blur(2px);
+}
+.how-section::before { top: -170px; left: -130px; }
+.how-section::after { right: -155px; bottom: -190px; }
+.how-heading { margin-bottom: 38px; }
+.eyebrow { display: inline-block; padding: 9px 17px; border-radius: 30px; background: #f2fbfbcc; color: #168b88; font-size: 10px; letter-spacing: 4px; }
+.how-heading h2 { margin: 18px 0 14px; color: #12283e; font-size: clamp(34px, 4vw, 52px); font-weight: 800; letter-spacing: -1.5px; }
+.how-heading h2 em { background: linear-gradient(90deg, #47c7bd, #08796e); background-clip: text; color: transparent; }
+.how-heading p { color: #8094aa; font-size: 16px; line-height: 1.55; }
+.how-steps { grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr) 48px minmax(0, 1fr); max-width: 1270px; align-items: center; }
+.step-card { min-height: 300px; box-sizing: border-box; padding: 56px 46px 22px; border: 1px solid #d9f0f2; border-radius: 25px; background: linear-gradient(135deg, #ffffffd9, #effbfcaa); box-shadow: 0 20px 44px #5b9eaa12, inset 0 1px 0 #fff; text-align: left; backdrop-filter: blur(12px); }
+.step-number { position: absolute; top: 12px; left: 20px; width: 48px; height: 48px; background: linear-gradient(145deg, #18c6a0, #078471); box-shadow: 0 7px 18px #0a9e8730; font-size: 16px; }
+.step-icon { display: grid; width: 78px; height: 78px; margin-bottom: 12px; place-items: center; border: 1px solid #d7f2f0; border-radius: 20px; background: linear-gradient(145deg, #f7ffff, #dcf6f4); box-shadow: 0 8px 20px #4bbeb41a, inset 0 1px 0 #fff; }
+.step-icon svg { width: 34px; height: 34px; fill: none; stroke: #078f80; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.6; }
+.step-card h3 { margin: 0 0 7px; color: #142d43; font-size: 20px; letter-spacing: -.4px; }
+.step-card > p { min-height: 44px; margin: 0 0 12px; color: #6e859c; font-size: 14px; line-height: 1.55; }
+.step-benefit { display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 0 13px; border-radius: 10px; background: #f4fbfbcc; color: #16877f; font-size: 11px; font-weight: 700; }
+.step-benefit span { display: grid; width: 22px; height: 22px; place-items: center; border: 2px solid #179b8d; border-radius: 50%; font-size: 14px; }
+.map-card { background: linear-gradient(135deg, #ffffffd9, #e8f9f9bb); }
+.map-decoration { position: absolute; top: 0; right: 0; width: 54%; height: 58%; overflow: hidden; opacity: .7; pointer-events: none; }
+.map-decoration::before, .map-decoration::after { position: absolute; top: 43%; left: -10%; width: 125%; height: 13px; border-radius: 50%; background: #fff; content: ''; transform: rotate(-22deg); }
+.map-decoration::after { top: 22%; left: 24%; width: 15px; height: 140%; transform: rotate(35deg); }
+.map-decoration span, .map-decoration i, .map-decoration b { position: absolute; z-index: 1; color: #12ad9a; font-size: 34px; font-style: normal; }
+.map-decoration span { top: 28px; right: 31%; }.map-decoration i { top: 68px; right: 13%; font-size: 22px; }.map-decoration b { top: 45px; left: 20%; color: #a2dedd; font-size: 26px; }
+.appointment-decoration { position: absolute; top: 17px; right: 15px; display: flex; width: 112px; height: 48px; align-items: center; justify-content: space-around; border: 1px solid #c8f5ef; border-radius: 14px; background: #d9faf2bd; box-shadow: 0 8px 18px #54cdb61c; color: #0d9d83; transform: rotate(14deg); }
+.appointment-decoration span { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 50%; background: #079780; color: white; }.appointment-decoration i { font-style: normal; letter-spacing: 2px; }
+.step-line { margin-top: 0; color: #15867d; font-size: 27px; }
+.how-action { margin-top: 48px; padding: 17px 35px; border-radius: 32px; background: linear-gradient(100deg, #087e72, #10b88c); box-shadow: 0 12px 24px #079b8130; font-size: 14px; }
+.how-action:hover { background: linear-gradient(100deg, #076b64, #0a9d7c); }
+@media (max-width: 1000px) {
+  .how-section { padding-right: 32px; padding-left: 32px; }
+  .how-steps { grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr) 30px minmax(0, 1fr); }
+  .step-card { padding-right: 22px; padding-left: 22px; }
+  .step-card h3 { font-size: 17px; }
+  .step-card > p { font-size: 12px; }
+}
+@media (max-width: 800px) {
+  .how-section { padding: 54px 22px 72px; }
+  .how-heading { margin-bottom: 34px; }
+  .how-heading h2 { font-size: 38px; }
+  .how-heading p { font-size: 14px; }
+  .how-steps { display: block; max-width: 520px; }
+  .step-card { min-height: 270px; margin-bottom: 20px; padding: 48px 28px 20px; }
+  .step-card h3 { font-size: 19px; }
+  .step-card > p { font-size: 13px; }
+  .step-line { display: none; }
+  .desktop-break { display: none; }
+  .map-decoration { width: 48%; }
+}
+
+.how-section {
+  padding: 8px max(1.7vw, 16px) 42px;
+  background: #d8dddf;
+  color: #080a0b;
+}
+.how-section::before, .how-section::after { display: none; }
+.feature-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+.feature-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: clamp(540px, 76vh, 760px);
+  flex-direction: column;
+  overflow: hidden;
+  padding: 28px 30px 30px;
+  border: 1px solid #131719;
+  border-radius: 34px;
+  background: #fff;
+  color: #080a0b;
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity .65s ease, transform .65s ease, background .25s ease;
+}
+.is-visible .feature-card { opacity: 1; transform: translateY(0); }
+.is-visible .feature-card:nth-child(2) { transition-delay: .12s; }
+.is-visible .feature-card:nth-child(3) { transition-delay: .24s; }
+.feature-card-dark { border-color: #050606; background: #050606; color: #fff; }
+.feature-label { position: relative; z-index: 1; font-size: clamp(12px, 1.15vw, 17px); font-weight: 500; letter-spacing: -.2px; }
+.feature-art {
+  position: relative;
+  display: grid;
+  width: min(100%, 390px);
+  flex: 1;
+  min-height: 270px;
+  align-self: center;
+  place-items: center;
+  color: #080a0b;
+}
+.feature-art::before {
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle, currentColor 2.7px, transparent 3.25px);
+  background-position: center;
+  background-size: 14px 14px;
+  content: '';
+  -webkit-mask-image: radial-gradient(ellipse 42% 34% at 50% 50%, #000 35%, transparent 72%);
+  mask-image: radial-gradient(ellipse 42% 34% at 50% 50%, #000 35%, transparent 72%);
+}
+.feature-art span { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.art-simple::before {
+  -webkit-mask-image: radial-gradient(ellipse 46% 39% at 48% 50%, #000 37%, transparent 72%);
+  mask-image: radial-gradient(ellipse 46% 39% at 48% 50%, #000 37%, transparent 72%);
+  transform: rotate(-25deg) scale(.92);
+}
+.art-proximity::before {
+  -webkit-mask-image: radial-gradient(ellipse 27% 48% at 50% 50%, #000 34%, transparent 72%);
+  mask-image: radial-gradient(ellipse 27% 48% at 50% 50%, #000 34%, transparent 72%);
+  transform: rotate(15deg) scale(.95);
+}
+.art-follow { color: #fff; }
+.art-follow::before {
+  background-size: 14px 14px;
+  -webkit-mask-image: radial-gradient(ellipse 40% 37% at 50% 50%, #000 48%, transparent 70%);
+  mask-image: radial-gradient(ellipse 40% 37% at 50% 50%, #000 48%, transparent 70%);
+}
+.feature-copy { margin-top: auto; text-align: left; }
+.feature-copy h2 { margin: 0 0 14px; color: inherit; font-size: clamp(24px, 2.3vw, 36px); font-weight: 600; letter-spacing: -1.1px; line-height: 1.07; }
+.feature-copy p { max-width: 420px; margin: 0; color: #30373b; font-size: clamp(13px, 1.1vw, 17px); line-height: 1.48; }
+.feature-card-dark .feature-copy p { color: #e2e4e5; }
+.how-action { margin-top: 26px; padding: 15px 22px; border-radius: 28px; background: #087f70; font-size: 13px; }
+.how-action:hover { background: #06665d; }
+@media (max-width: 800px) {
+  .how-section { padding: 8px 0 34px; }
+  .feature-cards { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 12px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .feature-cards::-webkit-scrollbar { display: none; }
+  .feature-card { min-width: min(82vw, 420px); min-height: 600px; padding: 24px 23px 25px; border-radius: 28px; scroll-snap-align: center; }
+  .feature-label { font-size: 13px; }
+  .feature-art { min-height: 300px; }
+  .feature-copy h2 { font-size: 30px; }
+  .feature-copy p { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feature-card, .is-visible .feature-card { opacity: 1; transform: none; transition: none; }
 }
 </style>

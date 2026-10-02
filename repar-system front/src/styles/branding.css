@@ -1,0 +1,14 @@
+/* Keep the supplied green logo legible over the application's dark brand surfaces. */
+.home-page .header .logo-reparsystem,
+.devenir-page .header .logo-reparsystem,
+.auth .visual .logo-reparsystem,
+.client footer .logo-reparsystem {
+  box-sizing: content-box;
+  padding: 3px;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.footer-brand { display: flex; align-items: center; gap: 9px; }
+.client-profile .topbar .brand { gap: 9px; }
+.client-profile > footer > b { display: flex; align-items: center; gap: 9px; }

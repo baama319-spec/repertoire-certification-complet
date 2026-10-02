@@ -1,7 +1,7 @@
 <template>
   <div class="client">
     <header>
-      <RouterLink to="/" class="brand"><i>R</i> ReparSystem</RouterLink>
+      <RouterLink to="/" class="brand"><MarqueDashboard role="Client" tone="dark" :size="40" :text-size="17" /></RouterLink>
       <nav>
         <RouterLink to="/">Accueil</RouterLink>
         <RouterLink to="/reparateurs">Trouver un réparateur</RouterLink>
@@ -15,7 +15,6 @@
     <section class="hero">
       <span>MON COMPTE</span>
       <h1>Mes <em>demandes</em></h1>
-      <p>Suivez l'évolution de vos demandes de réparation et restez informé en temps réel.</p>
     </section>
 
     <main>
@@ -98,7 +97,7 @@
     </div>
 
     <footer>
-      <b><i>R</i> ReparSystem</b>
+      <b><LogoReparSystem :size="38"/> ReparSystem</b>
       <span>Services<br><small>Smartphone & Tablette<br>Ordinateur<br>Électroménager</small></span>
       <span>L'entreprise<br><small>À propos<br>Comment ça marche ?<br>Contact</small></span>
       <span>Support<br><small>Centre d'aide<br>Contactez-nous<br>Conditions</small></span>
@@ -109,6 +108,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import EnteteClient from '../../components/client/EnteteClient.vue'
+import LogoReparSystem from '../../components/commun/LogoReparSystem.vue'
+import MarqueDashboard from '../../components/commun/MarqueDashboard.vue'
 import { chargerDemandes } from '../../services/serviceDemandes'
 import { chargerAvis, creerAvis } from '../../services/serviceAvis'
 
@@ -255,7 +256,8 @@ onBeforeUnmount(() => {
 .client *{box-sizing:border-box}
 .client header{height:72px;display:flex;align-items:center;gap:clamp(18px,3vw,48px);padding:0 max(5%,32px);background:#fff;border-bottom:1px solid #e5edf5}
 .client .brand{display:flex;align-items:center;gap:9px;flex:none;color:#12376c;font-size:17px;font-weight:800;text-decoration:none;white-space:nowrap}
-.client .brand i,.client footer i{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:8px;background:#087f70;color:#fff;font-style:normal}
+.client .brand :deep(.logo-reparsystem),.client footer :deep(.logo-reparsystem){object-fit:contain}
+.client footer b{display:flex;align-items:center;gap:9px}
 .client nav{display:flex;align-items:center;justify-content:center;gap:clamp(14px,2vw,30px);flex:1}
 .client nav a{color:#405878;font-size:12px;font-weight:650;text-decoration:none;white-space:nowrap}
 .client nav a:hover{color:#087f70}

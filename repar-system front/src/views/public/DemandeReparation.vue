@@ -49,6 +49,22 @@ onMounted(async () => {
 
 async function soumettre () {
   erreur.value = ''
+  if (!formulaire.value.appareil) {
+    erreur.value = 'Veuillez sélectionner le type d’appareil.'
+    return
+  }
+  if (!formulaire.value.description.trim() || formulaire.value.description.trim().length < 10) {
+    erreur.value = 'La description de la panne doit contenir au moins 10 caractères.'
+    return
+  }
+  if (!formulaire.value.localisation) {
+    erreur.value = 'Veuillez choisir votre zone de localisation.'
+    return
+  }
+  if (adresseRequise.value && !adresseValide.value) {
+    erreur.value = 'Indiquez votre adresse ou activez la géolocalisation pour une intervention à domicile.'
+    return
+  }
   if (!peutEnvoyer.value || envoi.value) return
   envoi.value = true
   try {

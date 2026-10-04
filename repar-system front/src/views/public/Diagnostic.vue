@@ -80,13 +80,27 @@ const activerLocalisation = () => {
   )
 }
 
+const validerDiagnostic = () => {
+  const description = formulaire.value.description.trim()
+  if (!formulaire.value.materiel) {
+    throw new Error('Veuillez sélectionner un type d’appareil.')
+  }
+  if (!description || description.length < 10) {
+    throw new Error('La description du problème doit contenir au moins 10 caractères.')
+  }
+  if (!formulaire.value.lieu || !String(formulaire.value.lieu).trim()) {
+    throw new Error('Veuillez sélectionner une ville.')
+  }
+}
+
 const lancerAnalyse = async () => {
   erreur.value = ''
   analyseEnCours.value = true
   try {
+    validerDiagnostic()
     diagnostic.value = await analyserDiagnostic({
       appareil: formulaire.value.materiel,
-      description: formulaire.value.description,
+      description: formulaire.value.description.trim(),
       ville: formulaire.value.lieu,
     })
     analyseLancee.value = true

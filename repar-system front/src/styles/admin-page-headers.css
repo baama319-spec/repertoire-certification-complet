@@ -45,3 +45,44 @@
   background: #123252 !important;
   color: #fff !important;
 }
+
+.administration .clients-page .filters button,
+.administration .demandes .filters button,
+.administration .page .filters button {
+  box-sizing: border-box;
+  flex: 0 1 180px;
+  width: 180px;
+  min-width: 0;
+  height: 40px !important;
+  padding: 0 12px !important;
+  border-radius: 9px !important;
+  font-size: 12px !important;
+  line-height: 1.1;
+}
+
+.administration .clients-page .filters,
+.administration .demandes .filters,
+.administration .page .filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  height: auto;
+  min-height: 66px;
+  padding: 12px 18px;
+}
+
+.administration .clients-page .filters > b,
+.administration .demandes .filters > b,
+.administration .page .filters > b {
+  flex: 0 0 80px;
+}
+
+@media (max-width: 760px) {
+  .administration .clients-page .filters button,
+  .administration .demandes .filters button,
+  .administration .page .filters button {
+    flex: 1 1 150px;
+    width: auto;
+  }
+}

@@ -28,6 +28,7 @@ import LogoReparSystem from '../../components/commun/LogoReparSystem.vue'
 import MarqueDashboard from '../../components/commun/MarqueDashboard.vue'
 import { useAuthentification } from '../../services/serviceAuthentification'
 import { api } from '../../services/api'
+import { confirmationMessage, emailMessage, passwordMessage, phoneMessage, requiredMessage } from '../../utils/formValidation'
 const { utilisateur, mettreAJourProfil, changerMotDePasse } = useAuthentification()
 const fichierPhoto = ref(null)
 const client = ref(null), zones = ref([]), modal = ref(''), enregistrement = ref(false)
@@ -59,18 +60,39 @@ async function changerPhoto (event) {
   event.target.value = ''
 }
 async function sauverIdentite () {
+  const erreurs = [
+    requiredMessage(form.value.prenom, 'Le prénom'),
+    requiredMessage(form.value.nom, 'Le nom'),
+    emailMessage(form.value.email),
+    phoneMessage(form.value.telephone),
+  ].filter(Boolean)
+  if (erreurs.length) throw new Error(erreurs[0])
   await mettreAJourProfil(utilisateur.value.id, JSON.stringify({ prenom: form.value.prenom, nom: form.value.nom, email: form.value.email, telephone: form.value.telephone }))
 }
 async function sauverCoordonnees () {
   if (!client.value) return
+  const erreurs = [
+    requiredMessage(form.value.zone_residence, 'La zone de résidence'),
+    requiredMessage(form.value.adresse_principale, 'L’adresse principale'),
+  ].filter(Boolean)
+  if (erreurs.length) throw new Error(erreurs[0])
   client.value = await api(`/clients/${client.value.id}/`, { method: 'PATCH', body: JSON.stringify({ zone_residence: form.value.zone_residence, adresse_principale: form.value.adresse_principale }) })
+}
+async function sauverMotDePasse () {
+  const erreurs = [
+    requiredMessage(motDePasse.value.actuel, 'Le mot de passe actuel'),
+    passwordMessage(motDePasse.value.nouveau),
+    confirmationMessage(motDePasse.value.nouveau, motDePasse.value.confirmation, 'La confirmation du mot de passe'),
+  ].filter(Boolean)
+  if (erreurs.length) throw new Error(erreurs[0])
+  await changerMotDePasse({ mot_de_passe_actuel: motDePasse.value.actuel, nouveau_mot_de_passe: motDePasse.value.nouveau, confirmation_mot_de_passe: motDePasse.value.confirmation })
 }
 async function enregistrerModal () {
   enregistrement.value = true
   try {
     if (modal.value === 'identite') await sauverIdentite()
     else if (modal.value === 'coordonnees') await sauverCoordonnees()
-    else await changerMotDePasse({ mot_de_passe_actuel: motDePasse.value.actuel, nouveau_mot_de_passe: motDePasse.value.nouveau, confirmation_mot_de_passe: motDePasse.value.confirmation })
+    else await sauverMotDePasse()
     fermerModal()
   } catch (erreur) { window.alert(erreur.message) } finally { enregistrement.value = false }
 }

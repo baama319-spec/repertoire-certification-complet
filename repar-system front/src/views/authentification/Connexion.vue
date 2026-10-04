@@ -7,17 +7,30 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthentification } from '../../services/serviceAuthentification'
 import LogoReparSystem from '../../components/commun/LogoReparSystem.vue'
+import { emailMessage, minLengthMessage } from '../../utils/formValidation'
 
 const router = useRouter()
 const { connecter } = useAuthentification()
 const email = ref(''), password = ref(''), show = ref(false), remember = ref(true), loading = ref(false), error = ref('')
+
+function validerFormulaire () {
+  const erreurs = [
+    emailMessage(email.value),
+    minLengthMessage(password.value, 'Le mot de passe', 8),
+  ].filter(Boolean)
+
+  if (erreurs.length) {
+    throw new Error(erreurs[0])
+  }
+}
+
 async function soumettre () {
-  error.value = ''; loading.value = true
+  error.value = ''
   try {
-    const utilisateur = await connecter({ email: email.value, password: password.value, remember: remember.value })
+    validerFormulaire()
+    loading.value = true
+    const utilisateur = await connecter({ email: email.value.trim(), password: password.value, remember: remember.value })
     const destination = router.currentRoute.value.query.redirection
-    // Un compte Client + Réparateur démarre côté Client ; il change ensuite
-    // volontairement d'espace depuis le menu du compte.
     const compteClientEtReparateur = utilisateur.role === 'CLIENT' && utilisateur.profil_reparateur
     router.push(typeof destination === 'string' ? destination : utilisateur.role === 'ADMINISTRATEUR' ? '/admin' : compteClientEtReparateur ? '/client/demandes' : utilisateur.role === 'REPARATEUR' ? '/pro/demandes' : '/client/demandes')
   } catch (err) { error.value = err.message } finally { loading.value = false }

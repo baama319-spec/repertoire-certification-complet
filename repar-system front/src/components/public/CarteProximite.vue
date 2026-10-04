@@ -3,6 +3,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { api } from '../../services/api'
 
 const props = defineProps({
   professionals: { type: Array, default: () => [] },
@@ -14,25 +15,16 @@ const mapElement = ref(null)
 const router = useRouter()
 const map = ref(null)
 const distanceMax = ref(20)
-const specialite = ref('Toutes les catégories')
+const toutesCategories = 'Toutes les catégories'
+const specialite = ref(toutesCategories)
+const categories = ref([])
 const selectedId = ref(null)
 const userPosition = ref(null)
 const userMarker = ref(null)
 const selectedRoute = ref(null)
 const markers = new Map()
 
-const categories = computed(() => [
-  'Toutes les catégories',
-  ...new Set(props.professionals.map(item => item.specialty).filter(Boolean)),
-])
-
 const points = computed(() => props.professionals.filter(item => item.lat !== null && item.lon !== null && Number.isFinite(item.lat) && Number.isFinite(item.lon)))
-const filtered = computed(() => points.value.filter((item) => {
-  const matchesCategory = specialite.value === 'Toutes les catégories' || item.specialty === specialite.value
-  const matchesDistance = !userPosition.value || !item.distanceKm || item.distanceKm <= distanceMax.value
-  return matchesCategory && matchesDistance
-}))
-
 const distanceInKm = item => {
   const distance = Number(item.distanceKm)
   if (Number.isFinite(distance) && distance > 0) return distance
@@ -43,6 +35,44 @@ const distanceInKm = item => {
   const deltaLongitude = (item.lon - userPosition.value.longitude) * Math.PI / 180
   const a = Math.sin(deltaLatitude / 2) ** 2 + Math.cos(latitude1) * Math.cos(latitude2) * Math.sin(deltaLongitude / 2) ** 2
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+const normaliserTexte = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('fr')
+const filtered = computed(() => points.value.filter((item) => {
+  const specialitesItem = [item.specialty, ...(Array.isArray(item.tags) ? item.tags : [])]
+    .flatMap(value => String(value || '').split(/[,;|]/))
+    .map(normaliserTexte)
+    .filter(Boolean)
+  const matchesCategory = specialite.value === toutesCategories || specialitesItem.includes(normaliserTexte(specialite.value))
+  const distance = distanceInKm(item)
+  const matchesDistance = distance == null || distance <= distanceMax.value
+  return matchesCategory && matchesDistance
+}))
+
+const chargerCategories = async () => {
+  try {
+    const data = await api('/specialites/')
+    const categoriesActives = (data.results || data)
+      .filter(item => item.actif !== false && item.nom)
+      .map(item => item.nom.trim())
+    categories.value = [toutesCategories, ...new Map(categoriesActives.map(nom => [normaliserTexte(nom), nom])).values()]
+  } catch (_) {
+    // En mode hors-ligne, les spécialités connues des professionnels restent filtrables.
+    const categoriesConnues = props.professionals
+      .flatMap(item => [item.specialty, ...(Array.isArray(item.tags) ? item.tags : [])])
+      .flatMap(value => String(value || '').split(/[,;|]/))
+      .map(value => value.trim())
+      .filter(Boolean)
+    categories.value = [toutesCategories, ...new Map(categoriesConnues.map(nom => [normaliserTexte(nom), nom])).values()]
+  }
+  if (!categories.value.some(nom => normaliserTexte(nom) === normaliserTexte(specialite.value))) {
+    specialite.value = toutesCategories
+  }
+}
+
+const reinitialiserFiltres = () => {
+  specialite.value = toutesCategories
+  distanceMax.value = 20
 }
 
 const distanceLabel = item => {
@@ -165,6 +195,7 @@ const locateUser = () => {
 
 onMounted(async () => {
   await nextTick()
+  await chargerCategories()
   map.value = L.map(mapElement.value, { zoomControl: false, scrollWheelZoom: false }).setView([14.4974, -14.4524], 7)
   L.control.zoom({ position: 'bottomright' }).addTo(map.value)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -195,9 +226,7 @@ onBeforeUnmount(() => {
   <section class="proximity-section">
     <div class="proximity-heading">
       <div>
-        <span class="proximity-eyebrow">À proximité</span>
         <h2>Trouvez un réparateur près de chez vous</h2>
-        <p>Les professionnels sont affichés selon leur zone d’intervention au Sénégal.</p>
       </div>
       <button class="locate-button" type="button" @click="locateUser">Utiliser ma position</button>
     </div>
@@ -205,17 +234,16 @@ onBeforeUnmount(() => {
     <div class="proximity-layout">
       <aside class="proximity-filters">
         <h3>Filtres</h3>
-        <button class="reset-filter" type="button" @click="specialite = 'Toutes les catégories'; distanceMax = 20">Réinitialiser</button>
+        <button class="reset-filter" type="button" @click="reinitialiserFiltres">Réinitialiser</button>
         <label>Catégorie
           <select v-model="specialite">
-            <option v-for="category in categories" :key="category">{{ category }}</option>
+            <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
           </select>
         </label>
         <label>Distance maximale <strong>{{ distanceMax }} km</strong>
           <input v-model.number="distanceMax" type="range" min="1" max="20">
           <span class="range-labels"><small>1 km</small><small>20 km</small></span>
         </label>
-        <div class="availability-row"><span>Disponibles maintenant</span><span class="status-dot"></span></div>
         <p class="filter-note">{{ filtered.length }} professionnel{{ filtered.length > 1 ? 's' : '' }} localisé{{ filtered.length > 1 ? 's' : '' }}</p>
       </aside>
 

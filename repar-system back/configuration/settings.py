@@ -40,7 +40,22 @@ TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates", "DIR
               "django.contrib.messages.context_processors.messages"]}}]
 WSGI_APPLICATION = "configuration.wsgi.application"
 ASGI_APPLICATION = "configuration.asgi.application"
-DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
+if os.getenv("DB_ENGINE", "sqlite").lower() in {"postgres", "postgresql"}:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("DB_NAME", "reparsystem"),
+            "USER": os.getenv("DB_USER", "postgres"),
+            "PASSWORD": os.getenv("DB_PASSWORD", ""),
+            "HOST": os.getenv("DB_HOST", "localhost"),
+            "PORT": os.getenv("DB_PORT", "5432"),
+            "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
+        }
+    }
+else:
+    # SQLite remains the default for local development and for the source
+    # database while its data is exported for a PostgreSQL migration.
+    DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}}
 AUTH_PASSWORD_VALIDATORS = []
 LANGUAGE_CODE, TIME_ZONE, USE_I18N, USE_TZ = "fr", "Africa/Dakar", True, True
 STATIC_URL, MEDIA_URL = "/static/", "/media/"

@@ -30,13 +30,30 @@ onMounted(async () => {
   } catch (err) { erreur.value = err.message } finally { chargement.value = false }
 })
 
+function validerCandidature () {
+  const description = formulaire.value.description.trim()
+  if (!description || description.length < 20) {
+    throw new Error('La présentation professionnelle doit contenir au moins 20 caractères.')
+  }
+  if (!formulaire.value.annee_experience || Number(formulaire.value.annee_experience) < 0 || Number(formulaire.value.annee_experience) > 99) {
+    throw new Error('Veuillez indiquer un nombre d’années d’expérience valide.')
+  }
+  if (!Array.isArray(formulaire.value.specialites) || formulaire.value.specialites.length === 0) {
+    throw new Error('Sélectionnez au moins une spécialité.')
+  }
+  if (!Array.isArray(formulaire.value.zones_intervention) || formulaire.value.zones_intervention.length === 0) {
+    throw new Error('Sélectionnez au moins une zone d’intervention.')
+  }
+  if (formulaire.value.latitude == null || formulaire.value.longitude == null) {
+    throw new Error('Activez votre localisation pour enregistrer votre candidature.')
+  }
+}
+
 async function soumettre () {
   erreur.value = ''
-  if (!formulaire.value.description.trim() || !formulaire.value.annee_experience || !formulaire.value.specialites.length || !formulaire.value.zones_intervention.length || formulaire.value.latitude == null || formulaire.value.longitude == null) {
-    erreur.value = 'Activez votre localisation et complétez la présentation, l’expérience, une spécialité et une zone.'; return
-  }
-  envoi.value = true
   try {
+    validerCandidature()
+    envoi.value = true
     profil.value = await envoyerCandidature({ ...formulaire.value, annee_experience: Number(formulaire.value.annee_experience) })
     enregistrerUtilisateur({ ...utilisateur.value, profil_reparateur: { id: profil.value.id, statut_verification: profil.value.statut_verification, profil_verifie: profil.value.profil_verifie } })
     succes.value = true

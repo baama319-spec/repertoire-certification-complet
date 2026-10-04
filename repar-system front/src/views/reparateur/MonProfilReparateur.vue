@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import LayoutReparateur from '../../layouts/LayoutReparateur.vue'
 import { useAuthentification } from '../../services/serviceAuthentification'
 import { api } from '../../services/api'
+import { emailMessage, minLengthMessage, phoneMessage, requiredMessage } from '../../utils/formValidation'
 const profil = ref({ nom: 'Awa Diop', telephone: '+221 77 000 00 00', email: 'awa.diop@reparsystem.sn', experience: '5 ans', bio: "Technicienne spécialisée avec plus de 5 ans d'expérience dans la réparation d'équipements électroniques et d'électroménager." })
 const specialites = ref([]), zones = ref([]), specialitesDisponibles = ref([]), zonesDisponibles = ref([])
 const localisation = ref({ latitude: null, longitude: null, statut: 'Non configurée' })
@@ -24,8 +25,16 @@ onMounted(async () => {
 })
 const sauvegarder = async () => {
   if (!utilisateur.value) return
-  const parties = profil.value.nom.trim().split(/\s+/)
   try {
+    const erreurs = [
+      requiredMessage(profil.value.nom, 'Le nom et prénom'),
+      phoneMessage(profil.value.telephone),
+      emailMessage(profil.value.email),
+      minLengthMessage(profil.value.bio, 'La bio professionnelle', 20),
+      requiredMessage(profil.value.experience, 'L’expérience'),
+    ].filter(Boolean)
+    if (erreurs.length) throw new Error(erreurs[0])
+    const parties = profil.value.nom.trim().split(/\s+/)
     await Promise.all([mettreAJourProfil(utilisateur.value.id, JSON.stringify({ prenom: parties.shift() || '', nom: parties.join(' '), telephone: profil.value.telephone, email: profil.value.email })), api('/reparateurs/moi/', { method: 'PATCH', body: JSON.stringify({ description: profil.value.bio, annee_experience: Number.parseInt(profil.value.experience, 10) || 0, latitude: localisation.value.latitude, longitude: localisation.value.longitude, specialites: specialites.value, zones_intervention: zones.value }) })])
     enregistre.value = true; window.setTimeout(() => { enregistre.value = false }, 1800)
   } catch (erreur) { window.alert(erreur.message) }

@@ -41,6 +41,7 @@ import { useRouter } from 'vue-router'
 import { useAuthentification } from '../../services/serviceAuthentification'
 import { api } from '../../services/api'
 import LogoReparSystem from '../../components/commun/LogoReparSystem.vue'
+import { checkboxMessage, confirmationMessage, emailMessage, minLengthMessage, passwordMessage, phoneMessage, requiredMessage } from '../../utils/formValidation'
 
 const router = useRouter()
 const { inscrire: creerCompte } = useAuthentification()
@@ -49,11 +50,28 @@ const libelleZone = zone => [zone.ville, zone.quartier || zone.nom].filter(Boole
 onMounted(async () => {
   try { const data = await api('/localisations/'); zones.value = data.results || data } catch (err) { error.value = 'Impossible de charger les zones disponibles.' } finally { chargementZones.value = false }
 })
+function validerFormulaire () {
+  const erreurs = [
+    requiredMessage(prenom.value, 'Le prénom'),
+    requiredMessage(nom.value, 'Le nom'),
+    emailMessage(email.value),
+    phoneMessage(telephone.value),
+    minLengthMessage(adressePrincipale.value || '', 'L’adresse principale', 3),
+    passwordMessage(motDePasse.value),
+    confirmationMessage(motDePasse.value, confirmation.value, 'La confirmation du mot de passe'),
+    checkboxMessage(accepted.value, 'les conditions d’utilisation'),
+  ].filter(Boolean)
+
+  if (erreurs.length) {
+    throw new Error(erreurs[0])
+  }
+}
 async function inscrire () {
   submitted.value = false
-  if (motDePasse.value !== confirmation.value) { error.value = 'Les deux mots de passe ne correspondent pas.'; return }
+  error.value = ''
   try {
-    await creerCompte({ prenom: prenom.value, nom: nom.value, email: email.value, telephone: telephone.value, password: motDePasse.value, zone_residence: zoneResidence.value, adresse_principale: adressePrincipale.value })
+    validerFormulaire()
+    await creerCompte({ prenom: prenom.value.trim(), nom: nom.value.trim(), email: email.value.trim(), telephone: telephone.value.trim(), password: motDePasse.value, zone_residence: zoneResidence.value, adresse_principale: adressePrincipale.value.trim() })
     submitted.value = true
     const destination = router.currentRoute.value.query.redirection
     router.push(typeof destination === 'string' ? destination : '/client/demandes')

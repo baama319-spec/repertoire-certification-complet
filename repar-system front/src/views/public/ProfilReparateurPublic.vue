@@ -38,9 +38,9 @@ const demanderIntervention = () => router.push({ name: 'demande-reparation', que
         <div class="detail-image" :style="image ? { backgroundImage: `url(${image})` } : {}"><span v-if="!image">{{ nom.slice(0, 1) }}</span></div>
         <div class="detail-info">
           <span class="eyebrow">RÉPARATEUR VÉRIFIÉ</span>
-          <h1>{{ nom }} <i>✓</i></h1>
+          <h1>{{ nom }} <AppIcon name="badge-check" :size="18" /></h1>
           <p>{{ specialites.map(item => item.nom).join(' · ') || 'Réparateur professionnel' }}</p>
-          <div><b>★ — <small>Avis clients</small></b><span>● {{ zones[0] || 'Zone non renseignée' }}</span><span>✓ Profil vérifié</span></div>
+          <div><b><AppIcon name="star" :size="15" fill="currentColor"/> — <small>Avis clients</small></b><span><AppIcon name="pin" :size="14"/> {{ zones[0] || 'Zone non renseignée' }}</span><span><AppIcon name="badge-check" :size="14"/> Profil vérifié</span></div>
           <button class="profile-action" @click="demanderIntervention">Demander une intervention</button>
         </div>
       </section>

@@ -1,12 +1,18 @@
 <template>
   <div class="overlay" @click.self="$emit('close')"><article class="sheet" role="dialog" aria-modal="true">
-    <header><h2>FICHE &amp; VÉRIFICATION RÉPARATEUR : {{ reparateur.name.toUpperCase() }}</h2><button class="close" @click="$emit('close')">×</button></header>
+    <header><h2>FICHE &amp; VÉRIFICATION RÉPARATEUR : {{ reparateur.name.toUpperCase() }}</h2><button class="close" aria-label="Fermer" @click="$emit('close')"><AppIcon name="close" :size="20"/></button></header>
     <div class="body"><section class="left">
-      <section class="card identity"><img :src="reparateur.image" :alt="reparateur.name"><div><h3>{{ reparateur.name }} <small>En ligne</small></h3><p>Réparateur professionnel</p><strong>★★★★★ <b>4.7</b> / 5 <em>(32 avis)</em></strong></div></section>
+      <section class="card identity"><img :src="reparateur.image" :alt="reparateur.name"><div><h3>{{ reparateur.name }} <small>En ligne</small></h3><p>Réparateur professionnel</p><strong><AppIcon v-for="star in 5" :key="star" name="star" :size="14" fill="currentColor"/> <b>4.7</b> / 5 <em>(32 avis)</em></strong></div></section>
       <section class="card info"><h4>INFORMATIONS PERSONNELLES &amp; CONTACT</h4><dl><dt>Nom complet</dt><dd>{{ reparateur.name }}</dd><dt>Téléphone</dt><dd>{{ reparateur.phone }}</dd><dt>Email</dt><dd>{{ reparateur.email }}</dd></dl></section>
       <section class="card presentation"><h4>PRÉSENTATION</h4><p>{{ reparateur.description || 'Non renseignée' }}</p></section>
       <section class="card info"><h4>COMPÉTENCES &amp; COUVERTURE GÉOGRAPHIQUE</h4><dl><dt>Spécialités</dt><dd>{{ reparateur.specialties.join(', ') }}</dd><dt>Zones d’intervention</dt><dd>{{ reparateur.zones.join(', ') }}</dd><dt>Expérience déclarée</dt><dd>{{ reparateur.experience }} an(s)</dd></dl></section>
-      <section class="card documents"><h4>PIÈCES JUSTIFICATIVES</h4><p class="sans-document">Aucun document n’est prévu par le backend actuel.</p></section><button class="refuse" @click="choice='Non certifié'">Refuser / Incomplet</button>
+      <section class="card documents"><h4>PIÈCES JUSTIFICATIVES</h4>
+        <div v-if="reparateur.carteIdentite" class="document-item"><span class="tag">Carte d’identité</span><a :href="reparateur.carteIdentite" target="_blank" rel="noreferrer">Ouvrir la carte</a></div>
+        <div v-if="reparateur.documents && reparateur.documents.length" class="documents-list">
+          <div v-for="doc in reparateur.documents" :key="doc.id" class="document-item"><span class="tag">{{ doc.type }}</span><a :href="doc.document" target="_blank" rel="noreferrer">{{ doc.nomFichier }}</a></div>
+        </div>
+        <p v-else class="sans-document">Aucune pièce justificative n’a été ajoutée.</p>
+      </section><button class="refuse" @click="choice='Non certifié'">Refuser / Incomplet</button>
     </section><section class="right">
       <section class="card account"><p><span><small>ID Réparateur</small><b>#R-2026-045</b></span></p><p><span><small>Membre depuis</small><b>12/08/2026</b></span></p><p><span><small>Dernière connexion</small><b>Aujourd'hui à 10:24</b></span></p></section>
       <section class="card certification"><h4>STATUT DE CERTIFICATION</h4><b>Statut actuel</b><mark :class="{certified: choice==='Certifié Pro'}">{{ choice }}</mark><p>Le profil sera vérifié par l’administrateur après contrôle des pièces et des informations.</p></section>

@@ -24,6 +24,7 @@ export async function api (path, options = {}) {
     sessionStorage.removeItem('reparsystem-token')
     localStorage.removeItem('reparsystem-utilisateur')
     sessionStorage.removeItem('reparsystem-utilisateur')
+    window.dispatchEvent(new Event('reparsystem:session-expired'))
   }
 
   if (!response.ok) {

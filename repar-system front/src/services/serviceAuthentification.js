@@ -1,7 +1,39 @@
 import { ref } from 'vue'
 import { api } from './api'
 
-const utilisateur = ref(JSON.parse(localStorage.getItem('reparsystem-utilisateur') || sessionStorage.getItem('reparsystem-utilisateur') || 'null'))
+const lireUtilisateurStocke = () => {
+  if (!localStorage.getItem('reparsystem-token') && !sessionStorage.getItem('reparsystem-token')) return null
+  try {
+    return JSON.parse(localStorage.getItem('reparsystem-utilisateur') || sessionStorage.getItem('reparsystem-utilisateur') || 'null')
+  } catch (_) {
+    return null
+  }
+}
+
+const utilisateur = ref(lireUtilisateurStocke())
+
+export const routeAccueilUtilisateur = (compte = utilisateur.value) => {
+  if (compte?.role === 'ADMINISTRATEUR') return '/admin'
+  if (compte?.role === 'REPARATEUR') return '/pro/demandes'
+  return '/client/demandes'
+}
+
+export const effacerSessionLocale = () => {
+  utilisateur.value = null
+  localStorage.removeItem('reparsystem-token')
+  localStorage.removeItem('reparsystem-utilisateur')
+  sessionStorage.removeItem('reparsystem-token')
+  sessionStorage.removeItem('reparsystem-utilisateur')
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (['reparsystem-token', 'reparsystem-utilisateur'].includes(event.key)) {
+      utilisateur.value = lireUtilisateurStocke()
+    }
+  })
+  window.addEventListener('reparsystem:session-expired', effacerSessionLocale)
+}
 
 const memoriserSession = (data) => {
   utilisateur.value = data.utilisateur
@@ -34,7 +66,6 @@ export function useAuthentification () {
   }
   const inscrire = async (payload) => {
     const data = await api('/utilisateurs/inscription/', { method: 'POST', body: JSON.stringify(payload) })
-    memoriserSession(data)
     return data.utilisateur
   }
   const mettreAJourProfil = async (id, donnees) => {
@@ -54,13 +85,7 @@ export function useAuthentification () {
       await api('/utilisateurs/deconnexion/', { method: 'POST' })
     } catch (_) {
       // La session locale doit tout de même être fermée si le serveur est indisponible.
-    } finally {
-      utilisateur.value = null
-      localStorage.removeItem('reparsystem-token')
-      localStorage.removeItem('reparsystem-utilisateur')
-      sessionStorage.removeItem('reparsystem-token')
-      sessionStorage.removeItem('reparsystem-utilisateur')
-    }
+    } finally { effacerSessionLocale() }
   }
   return { utilisateur, connecter, inscrire, mettreAJourProfil, changerMotDePasse, deconnecter, enregistrerUtilisateur }
 }

@@ -91,15 +91,15 @@ onBeforeUnmount(() => {
 
       <section v-if="selection" class="detail-demande panneau">
         <h1>Détail de la demande <em>#{{ selection.id }}</em></h1>
-        <article><h2><span>●</span> Client & localisation</h2><div class="client-lieu"><div><b>♟　 {{ selection.client }}</b><small>☎　 {{ selection.telephone }}</small></div><div><b>♦　 {{ selection.adresse }}</b><small>{{ selection.modeIntervention }}<template v-if="selection.adresseIntervention"> · {{ selection.adresseIntervention }}</template></small></div></div></article>
-        <article><h2><span>▣</span> Appareil & description de la panne</h2><div class="description"><p><b>Appareil :</b>　{{ selection.modele }}</p><p>▤　 "{{ selection.description }}"</p></div></article>
-        <article><h2><span>⌕</span> Pièces jointes envoyées par le client</h2><p class="description">Aucune pièce jointe n’est disponible pour cette demande.</p></article>
+        <article><h2><span><AppIcon name="user" :size="16"/></span> Client & localisation</h2><div class="client-lieu"><div><b><AppIcon name="user" :size="14"/> {{ selection.client }}</b><small><AppIcon name="phone" :size="14"/> {{ selection.telephone }}</small></div><div><b><AppIcon name="pin" :size="14"/> {{ selection.adresse }}</b><small>{{ selection.modeIntervention }}<template v-if="selection.adresseIntervention"> · {{ selection.adresseIntervention }}</template></small></div></div></article>
+        <article><h2><span><AppIcon name="smartphone" :size="16"/></span> Appareil & description de la panne</h2><div class="description"><p><b>Appareil :</b>　{{ selection.modele }}</p><p><AppIcon name="message" :size="14"/> "{{ selection.description }}"</p></div></article>
+        <article><h2><span><AppIcon name="folder" :size="16"/></span> Pièces jointes envoyées par le client</h2><p class="description">Aucune pièce jointe n’est disponible pour cette demande.</p></article>
 
         <footer class="actions-demande">
           <h2>ϟ　 Action rapide <small>(traitement en 1 clic)</small></h2>
           <div class="actions-boutons">
-            <button class="refuser" :disabled="traitement || selection.statut !== 'Nouveau'" @click="traiter('refuser')">×　 Refuser la demande</button>
-            <button class="accepter" :disabled="traitement || selection.statut !== 'Nouveau'" @click="traiter('accepter')">✓　 Accepter l'intervention</button>
+            <button class="refuser" :disabled="traitement || selection.statut !== 'Nouveau'" @click="traiter('refuser')"><AppIcon name="close" :size="15"/> Refuser la demande</button>
+            <button class="accepter" :disabled="traitement || selection.statut !== 'Nouveau'" @click="traiter('accepter')"><AppIcon name="check" :size="15"/> Accepter l'intervention</button>
           </div>
         </footer>
       </section>

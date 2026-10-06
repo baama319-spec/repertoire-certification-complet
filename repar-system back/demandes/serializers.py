@@ -2,10 +2,21 @@ from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from localisations.models import Localisation
 from specialites.models import Specialite
+from reparateurs.models import Reparateur
 from .models import DemandeMiseEnRelation, PieceJointe
 class DemandeSerializer(ModelSerializer):
     localisation = serializers.PrimaryKeyRelatedField(queryset=Localisation.objects.filter(actif=True))
     specialite = serializers.PrimaryKeyRelatedField(queryset=Specialite.objects.filter(actif=True), required=False, allow_null=True)
+    reparateur = serializers.PrimaryKeyRelatedField(
+        queryset=Reparateur.objects.filter(
+            statut_verification=Reparateur.StatutVerification.VALIDEE,
+            utilisateur__actif=True,
+        ),
+        required=False,
+        allow_null=True,
+    )
+    latitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True)
+    longitude = serializers.DecimalField(max_digits=9, decimal_places=6, required=False, allow_null=True)
     client_detail = serializers.SerializerMethodField()
     reparateur_detail = serializers.SerializerMethodField()
     localisation_detail = serializers.SerializerMethodField()

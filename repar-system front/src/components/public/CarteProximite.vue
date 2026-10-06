@@ -16,7 +16,9 @@ const router = useRouter()
 const map = ref(null)
 const distanceMax = ref(20)
 const toutesCategories = 'Toutes les catégories'
+const toutesLesNotes = 0
 const specialite = ref(toutesCategories)
+const noteMinimale = ref(toutesLesNotes)
 const categories = ref([])
 const selectedId = ref(null)
 const userPosition = ref(null)
@@ -46,7 +48,9 @@ const filtered = computed(() => points.value.filter((item) => {
   const matchesCategory = specialite.value === toutesCategories || specialitesItem.includes(normaliserTexte(specialite.value))
   const distance = distanceInKm(item)
   const matchesDistance = distance == null || distance <= distanceMax.value
-  return matchesCategory && matchesDistance
+  const note = Number(item.score)
+  const matchesRating = noteMinimale.value === toutesLesNotes || (Number.isFinite(note) && note >= noteMinimale.value)
+  return matchesCategory && matchesDistance && matchesRating
 }))
 
 const chargerCategories = async () => {
@@ -73,6 +77,7 @@ const chargerCategories = async () => {
 const reinitialiserFiltres = () => {
   specialite.value = toutesCategories
   distanceMax.value = 20
+  noteMinimale.value = toutesLesNotes
 }
 
 const distanceLabel = item => {
@@ -108,7 +113,7 @@ const creerPopupProfil = (item) => {
   coordonnees.textContent = `${item.lat.toFixed(6)}, ${item.lon.toFixed(6)}`
   const action = document.createElement('span')
   action.className = 'repairer-popup-action'
-  action.textContent = 'Voir le profil →'
+  action.textContent = 'Voir le profil'
 
   lien.append(nom, specialiteLabel, distance, duree, coordonnees, action)
   L.DomEvent.on(lien, 'click', (event) => {
@@ -240,6 +245,13 @@ onBeforeUnmount(() => {
             <option v-for="category in categories" :key="category" :value="category">{{ category }}</option>
           </select>
         </label>
+        <div class="rating-filter">
+          <span class="rating-filter-title">Note minimale</span>
+          <div class="rating-filter-stars" role="group" aria-label="Filtrer selon la note minimale">
+            <button v-for="star in 5" :key="star" type="button" :class="{ selected: noteMinimale >= star }" :aria-label="`${star} étoile${star > 1 ? 's' : ''} minimum`" :aria-pressed="noteMinimale === star" @click="noteMinimale = noteMinimale === star ? toutesLesNotes : star"><AppIcon name="star" :size="19" :fill="noteMinimale >= star ? 'currentColor' : 'none'" /></button>
+          </div>
+          <small class="rating-filter-hint">{{ noteMinimale ? `${noteMinimale} étoile${noteMinimale > 1 ? 's' : ''} et plus` : 'Toutes les notes' }}</small>
+        </div>
         <label>Distance maximale <strong>{{ distanceMax }} km</strong>
           <input v-model.number="distanceMax" type="range" min="1" max="20">
           <span class="range-labels"><small>1 km</small><small>20 km</small></span>
@@ -253,8 +265,8 @@ onBeforeUnmount(() => {
         <div class="nearby-list-header"><strong>{{ filtered.length }} artisans trouvés</strong><span>Les plus proches</span></div>
         <button v-for="item in filtered.slice(0, 5)" :key="item.id" class="nearby-card" :class="{ active: selectedId === item.id }" type="button" @click="selectProfessional(item)">
           <img :src="item.image" :alt="item.name">
-          <span class="nearby-info"><strong>{{ item.name }}</strong><small>{{ item.specialty }}</small><span class="rating">★ 4.8 <em>·</em> {{ distanceLabel(item) }}</span></span>
-          <span class="nearby-actions"><span class="available">Disponible</span><RouterLink v-if="item.slug" class="profile-link" :to="`/reparateurs/${item.slug}`" @click.stop>Voir le profil</RouterLink></span>
+          <span class="nearby-info"><strong>{{ item.name }}</strong><small>{{ item.specialty }}</small><span class="rating"><template v-if="item.score !== '—'"><AppIcon name="star" :size="12" fill="currentColor" /> {{ item.score }}</template><template v-else>Aucun avis</template> <em>·</em> {{ distanceLabel(item) }}</span></span>
+          <span class="nearby-actions"><RouterLink v-if="item.slug" class="profile-link" :to="`/reparateurs/${item.slug}`" @click.stop>Voir le profil</RouterLink></span>
         </button>
         <p v-if="!filtered.length" class="empty-map">Aucun réparateur dans ces critères.</p>
       </aside>
@@ -276,6 +288,13 @@ onBeforeUnmount(() => {
 .reset-filter { float: right; margin-top: -35px; padding: 0; background: none; color: #087f70; font-size: 9px; }
 .proximity-filters label { display: block; margin: 22px 0; font-weight: 700; }
 .proximity-filters select { display: block; width: 100%; margin-top: 8px; padding: 10px 10px; border: 1px solid #dfe7ee; border-radius: 8px; color: #667489; background: #fff; font-size: 10px; }
+.rating-filter { margin: 22px 0; }
+.rating-filter-title { display: block; color: #536175; font-weight: 700; }
+.rating-filter-stars { display: flex; gap: 4px; margin-top: 8px; }
+.rating-filter-stars button { padding: 2px; background: transparent; color: #cbd3dd; font-size: 23px; line-height: 1; transition: color .15s ease, transform .15s ease; }
+.rating-filter-stars button:hover { color: #f0b429; transform: scale(1.12); }
+.rating-filter-stars button.selected { color: #f0b429; }
+.rating-filter-hint { display: block; margin-top: 5px; color: #8190a3; font-size: 9px; font-weight: 400; }
 .proximity-filters strong { float: right; color: #087f70; font-size: 10px; }
 .proximity-filters input { width: 100%; margin-top: 13px; accent-color: #087f70; }
 .range-labels { display: flex; justify-content: space-between; color: #9da8b6; font-weight: 400; }
@@ -305,7 +324,6 @@ onBeforeUnmount(() => {
 .nearby-info small { color: #7e8a9b; font-size: 8px; }
 .rating { color: #ec9d16; font-size: 8px; }
 .rating em { color: #b4bdc8; font-style: normal; }
-.available { color: #159b78; font-size: 8px; white-space: nowrap; font-weight: 700; }
 .empty-map { color: #758195; font-size: 11px; line-height: 1.5; }
 @media (max-width: 980px) { .proximity-layout { grid-template-columns: 170px 1fr; } .nearby-list { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 12px; } .nearby-list-header { grid-column: 1 / -1; } }
 @media (max-width: 650px) { .proximity-section { padding: 45px 16px 55px; } .proximity-heading { display: block; } .locate-button { margin-top: 16px; } .proximity-layout { display: block; } .proximity-filters { border-right: 0; border-bottom: 1px solid #e8edf2; } .senegal-map { min-height: 380px; } .nearby-list { display: block; } }

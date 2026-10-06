@@ -12,6 +12,13 @@ const convertir = (profil) => ({
   id: profil.id, name: [profil.utilisateur_detail?.prenom, profil.utilisateur_detail?.nom].filter(Boolean).join(' '),
   phone: profil.utilisateur_detail?.telephone || 'Non renseigné', email: profil.utilisateur_detail?.email || '',
   image: profil.utilisateur_detail?.photo_profil || photoDefaut,
+  carteIdentite: profil.photo_carte_identite || '',
+  documents: (profil.documents_detail || []).map((document) => ({
+    id: document.id,
+    type: document.type_document || 'AUTRE',
+    document: document.document || '',
+    nomFichier: document.nom_fichier || 'Document joint',
+  })),
   specialties: (profil.specialites_detail || []).map(({ nom }) => nom), zones: (profil.zones_intervention_detail || []).map(libelleZone),
   experience: profil.annee_experience, description: profil.description, status: statut(profil), statutVerification: profil.statut_verification, profilVerifie: profil.profil_verifie, estBloque: profil.utilisateur_detail?.actif === false, motifRefus: profil.motif_refus || '',
 })

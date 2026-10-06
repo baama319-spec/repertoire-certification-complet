@@ -26,7 +26,10 @@ class AvisTests(APITestCase):
             role=self.user_model.Role.REPARATEUR,
         )
         self.client_profile = Client.objects.create(utilisateur=self.client_user)
-        self.reparateur = Reparateur.objects.create(utilisateur=self.reparateur_user)
+        self.reparateur = Reparateur.objects.create(
+            utilisateur=self.reparateur_user,
+            statut_verification=Reparateur.StatutVerification.VALIDEE,
+        )
         self.localisation = Localisation.objects.create(
             nom="Dakar Plateau",
             adresse="Dakar Plateau",

@@ -8,9 +8,9 @@ defineProps({ person: { type: Object, required: true }, search: Boolean })
       <span v-if="person.badge" class="badge">{{ person.badge }}</span>
     </div>
     <div class="card-content">
-      <div class="name-score"><h3>{{ person.name }}</h3><strong><i>★</i> {{ person.score === '—' ? 'Nouveau' : person.score }}</strong></div>
+      <div class="name-score"><h3>{{ person.name }}</h3><strong><AppIcon name="star" :size="14" fill="currentColor" /> {{ person.score === '—' ? 'Nouveau' : person.score }}</strong></div>
       <p class="company">{{ person.company }} · {{ person.specialty }}</p>
-      <p class="location"><span>⌖</span> {{ person.location }}</p>
+      <p class="location"><AppIcon name="pin" :size="13" /> {{ person.location }}</p>
       <div v-if="person.tags?.length" class="tags"><span v-for="tag in person.tags.slice(0, 3)" :key="tag">{{ tag }}</span></div>
       <RouterLink class="profile-button" :to="`/reparateurs/${person.slug}`">Voir le profil</RouterLink>
     </div>

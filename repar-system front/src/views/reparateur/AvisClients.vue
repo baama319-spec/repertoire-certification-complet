@@ -68,8 +68,8 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <LayoutReparateur><section class="avis-page">
-    <header class="titre"><span>★</span><div><h1>Avis et évaluations clients</h1><p>Consultez tous les retours laisser par vos clients à la suite de vos interventions.</p></div></header>
-    <section class="resume"><h2>Résumé des évaluations</h2><div class="notation"><article><b>★</b><strong>{{ moyenne.toFixed(1) }}</strong><em>/ 5.0</em><p>Basé sur <b>{{ avisBruts.length }}</b> avis</p></article><div class="barres"><p v-for="ligne in repartition" :key="ligne.note"><b>{{ ligne.note }}</b><span>★</span><i><small :style="{ width: ligne.largeur }"></small></i><em>({{ ligne.nombre }})</em></p></div></div></section>
+    <header class="titre"><span><AppIcon name="star" :size="24" fill="currentColor"/></span><div><h1>Avis et évaluations clients</h1></div></header>
+    <section class="resume"><h2>Résumé des évaluations</h2><div class="notation"><article><AppIcon name="star" :size="34" fill="currentColor"/><strong>{{ moyenne.toFixed(1) }}</strong><em>/ 5.0</em><p>Basé sur <b>{{ avisBruts.length }}</b> avis</p></article><div class="barres"><p v-for="ligne in repartition" :key="ligne.note"><b>{{ ligne.note }}</b><AppIcon name="star" :size="15" fill="currentColor"/><i><small :style="{ width: ligne.largeur }"></small></i><em>({{ ligne.nombre }})</em></p></div></div></section>
     <section class="liste"><header><h2>Liste des derniers avis</h2><div><button type="button">Filtrer par note:　<b>Toutes</b>　⌄</button><button type="button">Trier par:　<b>Plus récents</b>　⌄</button></div></header><p v-if="chargement" class="etat">Chargement des avis…</p><p v-else-if="erreur" class="etat erreur" role="alert">{{ erreur }} <button type="button" @click="charger">Réessayer</button></p><p v-else-if="!avis.length" class="etat">Aucun avis reçu pour le moment. Les nouveaux avis de vos clients apparaîtront ici.</p><div v-else class="avis-liste"><CarteAvisReparateur v-for="item in avis" :key="item.id" :avis="item" /></div></section>
   </section></LayoutReparateur>
 </template>

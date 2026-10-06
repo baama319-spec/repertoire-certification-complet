@@ -11,7 +11,7 @@
 			<section v-else class="reviews" aria-label="Avis envoyés">
 				<article v-for="item in reviews" :key="item.id" class="review">
 					<header><div><strong>{{ item.demande_appareil || 'Demande de réparation' }}</strong><small>{{ item.demande_specialite || 'Réparation générale' }} · Demande #{{ item.demande }}</small></div><time>{{ item.date }}</time></header>
-					<p class="rating"><span>{{ '★'.repeat(item.note) }}{{ '☆'.repeat(5 - item.note) }}</span>　{{ item.note }}/5</p>
+					<p class="rating"><span><AppIcon v-for="star in 5" :key="star" name="star" :size="15" :fill="star <= item.note ? 'currentColor' : 'none'" /></span>　{{ item.note }}/5</p>
 					<p v-if="item.commentaire" class="comment">“{{ item.commentaire }}”</p>
 					<p class="pro">Réparateur : <b>{{ item.reparateur_nom || 'Réparateur' }}</b></p>
 				</article>

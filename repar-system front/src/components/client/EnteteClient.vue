@@ -2,14 +2,14 @@
   <div ref="menu" class="profil-client">
     <button class="declencheur" type="button" :aria-expanded="ouvert" @click="ouvert = !ouvert">
       <Avatar :photo="utilisateur?.photo_profil" :nom="nomComplet" :alt="`Photo de ${nomComplet}`" />
-      <span>{{ nomComplet }}</span><b>⌄</b>
+      <span>{{ nomComplet }}</span><AppIcon name="chevron-down" :size="14" />
     </button>
     <nav v-if="ouvert" class="menu" aria-label="Menu du compte">
-      <RouterLink to="/client/demandes" @click="fermer">▣ <span>Mes demandes</span></RouterLink>
-      <RouterLink to="/client/avis" @click="fermer">☆ <span>Mes avis</span></RouterLink>
-      <RouterLink to="/client/profil" @click="fermer">♟ <span>Mon profil</span></RouterLink>
-      <RouterLink v-if="estReparateurVerifie" class="espace-pro" to="/pro/demandes" @click="fermer">⚒ <span>Espace réparateur</span></RouterLink>
-      <button type="button" class="deconnexion" @click="seDeconnecter">⇥ <span>Déconnexion</span></button>
+      <RouterLink to="/client/demandes" @click="fermer"><AppIcon name="clipboard" /> <span>Mes demandes</span></RouterLink>
+      <RouterLink to="/client/avis" @click="fermer"><AppIcon name="star" /> <span>Mes avis</span></RouterLink>
+      <RouterLink to="/client/profil" @click="fermer"><AppIcon name="user" /> <span>Mon profil</span></RouterLink>
+      <RouterLink v-if="estReparateurVerifie" class="espace-pro" to="/pro/demandes" @click="fermer"><AppIcon name="wrench" /> <span>Espace réparateur</span></RouterLink>
+      <button type="button" class="deconnexion" @click="seDeconnecter"><AppIcon name="logout" /> <span>Déconnexion</span></button>
     </nav>
   </div>
 </template>
@@ -24,7 +24,7 @@ import { computed } from 'vue'
 const router = useRouter()
 const { deconnecter, utilisateur } = useAuthentification()
 const nomComplet = computed(() => [utilisateur.value?.prenom, utilisateur.value?.nom].filter(Boolean).join(' ') || 'Mon compte')
-const estReparateurVerifie = computed(() => utilisateur.value?.profil_reparateur?.profil_verifie)
+const estReparateurVerifie = computed(() => utilisateur.value?.actif !== false && utilisateur.value?.profil_reparateur?.statut_verification === 'VALIDEE')
 const ouvert = ref(false)
 const menu = ref(null)
 const fermer = () => { ouvert.value = false }

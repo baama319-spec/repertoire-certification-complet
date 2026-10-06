@@ -29,7 +29,7 @@ onMounted(() => {
 <template>
 	<EntetePublic />
 	<main>
-		<section class="search-hero"><h1>Quel professionnel recherchez-vous ?</h1><form class="wide-search" @submit.prevent><label>⌕ <input v-model.trim="recherche" placeholder="Spécialité, service ou zone..."></label><button>Rechercher</button></form></section>
+		<section class="search-hero"><h1>Quel professionnel recherchez-vous ?</h1><form class="wide-search" @submit.prevent><label><AppIcon name="search" :size="17"/><input v-model.trim="recherche" placeholder="Spécialité, service ou zone..."></label><button>Rechercher</button></form></section>
 		<section class="results"><div class="results-head"><h2>{{ visibles.length }} réparateur{{ visibles.length > 1 ? 's' : '' }} trouvé{{ visibles.length > 1 ? 's' : '' }}</h2></div><p v-if="chargement">Chargement des réparateurs…</p><p v-else-if="erreur">{{ erreur }}</p><p v-else-if="!visibles.length">Aucun réparateur ne correspond à votre recherche.</p><div v-else class="pro-grid result-grid"><CarteReparateur v-for="p in visibles" :key="p.id" :person="p" search /></div></section>
 		<CarteProximite :professionals="reparateurs" />
 	</main>

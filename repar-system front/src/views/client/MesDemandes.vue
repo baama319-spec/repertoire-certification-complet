@@ -20,7 +20,7 @@
     <main>
       <div class="filters" aria-label="Filtrer les demandes par statut">
         <button v-for="item in filters" :key="item.key" type="button" :class="{ selected: filter === item.key }" @click="filter = item.key">
-          {{ item.icon }}　{{ item.label }}
+          <AppIcon :name="item.icon" :size="15" /> {{ item.label }}
         </button>
       </div>
 
@@ -34,26 +34,26 @@
 
       <template v-else>
         <article v-for="item in visible" :key="item.id" class="request">
-          <div class="device-thumbnail" :aria-label="item.device"><span>{{ item.deviceIcon }}</span></div>
+          <div class="device-thumbnail" :aria-label="item.device"><AppIcon :name="item.deviceIcon" :size="34" /></div>
           <section class="request-summary">
             <h2>{{ item.device }}</h2>
             <p>{{ item.issue }}</p>
             <span v-for="tag in item.tags" :key="tag">{{ tag }}</span>
             <i v-if="item.description">“{{ item.description }}”</i>
-            <small>▣　 Demande #{{ item.id }}</small>
+            <small><AppIcon name="document" :size="14" /> Demande #{{ item.id }}</small>
           </section>
           <section class="pro">
             <img v-if="item.proImage" :src="item.proImage" :alt="item.pro">
             <span v-else class="pro-avatar" aria-hidden="true">{{ item.proInitials }}</span>
             <b>{{ item.pro }}</b>
             <small>Réparateur</small>
-            <p>●　 {{ item.zone }}</p>
-            <p>▣　 {{ item.date }}</p>
+            <p><AppIcon name="pin" :size="14" /> {{ item.zone }}</p>
+            <p><AppIcon name="calendar" :size="14" /> {{ item.date }}</p>
           </section>
           <section class="state">
-            <mark :class="item.key">{{ item.icon }}　{{ item.status }}</mark>
+            <mark :class="item.key"><AppIcon :name="item.icon" :size="14" /> {{ item.status }}</mark>
             <button type="button" @click="ouvrirDetails(item)">⊙　 Voir le détail</button>
-            <button v-if="item.statut === 'ACCEPTEE' && !avisParDemande[item.id]" class="leave-review" type="button" @click="ouvrirDetails(item)">★　Laisser un avis</button>
+            <button v-if="item.statut === 'ACCEPTEE' && !avisParDemande[item.id]" class="leave-review" type="button" @click="ouvrirDetails(item, true)"><AppIcon name="star" :size="14" /> Laisser un avis</button>
           </section>
           <strong class="request-arrow" aria-hidden="true">›</strong>
         </article>
@@ -61,29 +61,34 @@
     </main>
 
     <div v-if="selectedRequest" class="detail-overlay" @click.self="selectedRequest = null">
-      <section class="detail-modal" role="dialog" aria-modal="true" :aria-labelledby="`detail-title-${selectedRequest.id}`">
-        <button class="detail-close" type="button" aria-label="Fermer" @click="selectedRequest = null">×</button>
-        <span class="detail-eyebrow">DÉTAIL DE LA DEMANDE #{{ selectedRequest.id }}</span>
-        <h2 :id="`detail-title-${selectedRequest.id}`">{{ selectedRequest.device }}</h2>
-        <p><strong>Statut :</strong> {{ selectedRequest.status }}</p>
-        <p><strong>Spécialité :</strong> {{ selectedRequest.issue }}</p>
-        <p><strong>Description :</strong> {{ selectedRequest.description || 'Aucune description fournie.' }}</p>
-        <p><strong>Réparateur :</strong> {{ selectedRequest.pro }}</p>
-        <p><strong>Localisation :</strong> {{ selectedRequest.zone }}</p>
-        <p><strong>Mode d’intervention :</strong> {{ selectedRequest.mode }}</p>
-        <p v-if="selectedRequest.address"><strong>Adresse / repère :</strong> {{ selectedRequest.address }}</p>
-        <p><strong>Créée le :</strong> {{ selectedRequest.date }}</p>
+      <section class="detail-modal" role="dialog" aria-modal="true" :aria-labelledby="notationSeule ? `review-title-${selectedRequest.id}` : `detail-title-${selectedRequest.id}`">
+        <button class="detail-close" type="button" aria-label="Fermer" @click="selectedRequest = null"><AppIcon name="close" :size="20" /></button>
+        <template v-if="!notationSeule">
+          <span class="detail-eyebrow"><AppIcon name="clipboard" :size="14"/> Demande #{{ selectedRequest.id }}</span>
+          <div class="detail-title-row"><span class="detail-device-icon"><AppIcon :name="selectedRequest.deviceIcon" :size="25"/></span><div><h2 :id="`detail-title-${selectedRequest.id}`">{{ selectedRequest.device }}</h2><span class="detail-created"><AppIcon name="calendar" :size="13"/> {{ selectedRequest.date }}</span></div></div>
+          <div class="detail-status-row"><span>État de la demande</span><mark :class="selectedRequest.key"><AppIcon :name="selectedRequest.icon" :size="14"/> {{ selectedRequest.status }}</mark></div>
+          <div class="detail-fields">
+            <div><span class="detail-field-icon"><AppIcon name="wrench" :size="15"/></span><p><small>Spécialité</small><strong>{{ selectedRequest.issue }}</strong></p></div>
+            <div><span class="detail-field-icon"><AppIcon name="user" :size="15"/></span><p><small>Réparateur</small><strong>{{ selectedRequest.pro }}</strong></p></div>
+            <div><span class="detail-field-icon"><AppIcon name="pin" :size="15"/></span><p><small>Localisation</small><strong>{{ selectedRequest.zone }}</strong></p></div>
+            <div><span class="detail-field-icon"><AppIcon name="home" :size="15"/></span><p><small>Mode d’intervention</small><strong>{{ selectedRequest.mode }}</strong></p></div>
+            <div v-if="selectedRequest.address"><span class="detail-field-icon"><AppIcon name="map-pin" :size="15"/></span><p><small>Adresse / repère</small><strong>{{ selectedRequest.address }}</strong></p></div>
+          </div>
+          <div class="detail-description"><span><AppIcon name="message" :size="15"/> Description de la panne</span><p>{{ selectedRequest.description || 'Aucune description fournie.' }}</p></div>
+          <p v-if="erreurAnnulation" class="review-error" role="alert">{{ erreurAnnulation }}</p>
+          <footer class="detail-actions"><button v-if="selectedRequest.statut === 'EN_ATTENTE'" class="cancel-request" type="button" :disabled="annulationEnCours" @click="annulerDemande">{{ annulationEnCours ? 'Annulation…' : 'Annuler ma demande' }}</button><button class="close-details" type="button" @click="selectedRequest = null">Fermer</button></footer>
+        </template>
         <section v-if="selectedRequest.statut === 'ACCEPTEE'" class="review-section">
-          <h3>Votre avis sur {{ selectedRequest.pro }}</h3>
+          <h3 :id="notationSeule ? `review-title-${selectedRequest.id}` : undefined">Votre avis sur {{ selectedRequest.pro }}</h3>
           <p v-if="avisParDemande[selectedRequest.id]" class="review-confirmation">Merci, votre avis de {{ avisParDemande[selectedRequest.id].note }}/5 a été envoyé au réparateur.</p>
           <form v-else class="review-form" @submit.prevent="envoyerAvis">
             <label>Votre note
               <select v-model.number="formAvis.note" required>
-                <option :value="5">★★★★★ — Excellent</option>
-                <option :value="4">★★★★ — Très bien</option>
-                <option :value="3">★★★ — Bien</option>
-                <option :value="2">★★ — Moyen</option>
-                <option :value="1">★ — À améliorer</option>
+                <option :value="5">Excellent — 5/5</option>
+                <option :value="4">Très bien — 4/5</option>
+                <option :value="3">Bien — 3/5</option>
+                <option :value="2">Moyen — 2/5</option>
+                <option :value="1">À améliorer — 1/5</option>
               </select>
             </label>
             <label>Votre commentaire (facultatif)
@@ -96,12 +101,6 @@
       </section>
     </div>
 
-    <footer>
-      <b><LogoReparSystem :size="38"/> ReparSystem</b>
-      <span>Services<br><small>Smartphone & Tablette<br>Ordinateur<br>Électroménager</small></span>
-      <span>L'entreprise<br><small>À propos<br>Comment ça marche ?<br>Contact</small></span>
-      <span>Support<br><small>Centre d'aide<br>Contactez-nous<br>Conditions</small></span>
-    </footer>
   </div>
 </template>
 
@@ -110,7 +109,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import EnteteClient from '../../components/client/EnteteClient.vue'
 import LogoReparSystem from '../../components/commun/LogoReparSystem.vue'
 import MarqueDashboard from '../../components/commun/MarqueDashboard.vue'
-import { chargerDemandes } from '../../services/serviceDemandes'
+import { annulerDemandeClient, chargerDemandes } from '../../services/serviceDemandes'
 import { chargerAvis, creerAvis } from '../../services/serviceAvis'
 
 const filter = ref('all')
@@ -118,23 +117,26 @@ const requests = ref([])
 const loading = ref(true)
 const error = ref('')
 const selectedRequest = ref(null)
+const notationSeule = ref(false)
 const reviews = ref([])
 const formAvis = ref({ note: 5, commentaire: '' })
 const envoiAvis = ref(false)
 const erreurAvis = ref('')
+const annulationEnCours = ref(false)
+const erreurAnnulation = ref('')
 let actualisationInterval = null
 let actualisationEnCours = false
 let actualisationAvisEnCours = false
 
 const statusDefinitions = [
-  { key: 'waiting', value: 'EN_ATTENTE', label: 'En attente', icon: '●' },
-  { key: 'accepted', value: 'ACCEPTEE', label: 'Acceptées', icon: '⬟' },
-  { key: 'refused', value: 'REFUSEE', label: 'Refusées', icon: '×' },
-  { key: 'cancelled', value: 'ANNULEE', label: 'Annulées', icon: '×' },
+  { key: 'waiting', value: 'EN_ATTENTE', label: 'En attente', icon: 'clock' },
+  { key: 'accepted', value: 'ACCEPTEE', label: 'Acceptées', icon: 'check-circle' },
+  { key: 'refused', value: 'REFUSEE', label: 'Refusées', icon: 'x-circle' },
+  { key: 'cancelled', value: 'ANNULEE', label: 'Annulées', icon: 'close' },
 ]
 
 const filters = computed(() => [
-  { key: 'all', label: `Toutes (${requests.value.length})`, icon: '☷' },
+  { key: 'all', label: `Toutes (${requests.value.length})`, icon: 'list' },
   ...statusDefinitions.map((status) => ({
     ...status,
     label: `${status.label} (${requests.value.filter(request => request.statut === status.value).length})`,
@@ -157,7 +159,7 @@ const normalizeRequest = (request) => {
   return {
     ...request,
     device,
-    deviceIcon: /télé|tv/i.test(device) ? '📺' : /ordinateur|pc|portable/i.test(device) ? '💻' : /lave|électroménager/i.test(device) ? '⚙️' : /smartphone|téléphone|mobile|tablette/i.test(device) ? '📱' : '🔧',
+    deviceIcon: /télé|tv/i.test(device) ? 'television' : /ordinateur|pc|portable/i.test(device) ? 'laptop' : /lave|électroménager/i.test(device) ? 'appliance' : /smartphone|téléphone|mobile/i.test(device) ? 'smartphone' : /tablette/i.test(device) ? 'monitor' : 'wrench',
     issue: specialization,
     tags: [specialization, mode],
     description: request.description_probleme || '',
@@ -170,7 +172,7 @@ const normalizeRequest = (request) => {
     address: request.adresse_intervention || '',
     status: status?.label || request.statut || 'Statut inconnu',
     key: status?.key || 'waiting',
-    icon: status?.icon || '●',
+    icon: status?.icon || 'circle',
   }
 }
 
@@ -188,10 +190,28 @@ const rafraichirAvis = async () => {
   try { reviews.value = await chargerAvis() } catch (_) { /* Les demandes restent consultables si les avis sont momentanément indisponibles. */ } finally { actualisationAvisEnCours = false }
 }
 
-const ouvrirDetails = (demande) => {
+const ouvrirDetails = (demande, ouvrirNotation = false) => {
   selectedRequest.value = demande
+  notationSeule.value = ouvrirNotation
   erreurAvis.value = ''
+  erreurAnnulation.value = ''
   formAvis.value = { note: 5, commentaire: '' }
+}
+
+const annulerDemande = async () => {
+  if (!selectedRequest.value || annulationEnCours.value) return
+  if (!window.confirm('Voulez-vous vraiment annuler cette demande ?')) return
+  annulationEnCours.value = true
+  erreurAnnulation.value = ''
+  try {
+    await annulerDemandeClient(selectedRequest.value.id)
+    await charger({ silencieux: true })
+    selectedRequest.value = requests.value.find(item => item.id === selectedRequest.value?.id) || null
+  } catch (error) {
+    erreurAnnulation.value = error.message
+  } finally {
+    annulationEnCours.value = false
+  }
 }
 
 const envoyerAvis = async () => {
@@ -327,6 +347,7 @@ onBeforeUnmount(() => {
 @media(max-width:720px){.client header{flex-wrap:wrap}.client nav{order:3;flex-basis:100%;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;padding:4px 0}.client .request{grid-template-columns:76px minmax(0,1fr) 30px;gap:12px;padding:14px;min-height:0}.client .device-thumbnail{grid-column:1;grid-row:1;width:76px;height:82px;font-size:30px}.client .request-summary{grid-column:2;grid-row:1}.client .request .pro{grid-column:1/3;grid-row:2;grid-template-columns:42px minmax(0,1fr);padding:12px 0 0;border-top:1px solid #e4edf7;border-left:0}.client .request .pro>img,.client .request .pro-avatar{width:42px;height:42px}.client .request .state{grid-column:1/3;grid-row:3;display:flex;align-items:center;gap:14px}.client .request .state button{flex:1;width:auto;margin:0}.client .request-arrow{grid-column:3;grid-row:1}.client .filters{gap:8px}.client .filters button{min-width:118px}}
 @media(max-width:480px){.client .hero p{font-size:12px}.client .request{gap:9px;padding:12px}.client .request h2{font-size:14px}.client .request p{font-size:11px}.client .request-summary>i{font-size:11px}.client .request .state{align-items:stretch;flex-direction:column;gap:8px}.client .request .state button{min-height:38px}}
 /* Cartes plus larges et informations plus confortables à lire. */
+.client main{min-height:420px}
 main{width:calc(100% - 64px);max-width:1450px;margin:28px auto 40px}
 .filters{gap:12px;padding:11px;margin-bottom:14px}
 .filters button{height:44px;font-size:12px;font-weight:700}
@@ -355,10 +376,27 @@ main{width:calc(100% - 64px);max-width:1450px;margin:28px auto 40px}
 .detail-modal h2{margin:11px 40px 22px 0;color:#12376c;font-size:23px}
 .detail-modal p{margin:12px 0;color:#526e91;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
 .detail-modal p strong{color:#23466f}
+.detail-modal .detail-eyebrow{display:flex;align-items:center;gap:7px;color:#087f70;font-size:11px;font-weight:800;letter-spacing:.08em}
+.detail-title-row{display:flex;align-items:center;gap:14px;margin:18px 38px 20px 0}
+.detail-device-icon{display:grid;width:52px;height:52px;flex:none;place-items:center;border-radius:14px;background:#eaf5f4;color:#087f70}
+.detail-title-row h2{margin:0 0 7px;font-size:22px;line-height:1.25}
+.detail-created{display:flex;align-items:center;gap:6px;color:#74869e;font-size:11px}
+.detail-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 15px;border:1px solid #e6edf5;border-radius:10px;background:#f8fafc;color:#526b8d;font-size:12px;font-weight:700}
+.detail-status-row mark{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;background:#fff0d7;color:#a86700;font-size:11px;font-weight:700}
+.detail-status-row mark.accepted{background:#ddf8ed;color:#008b68}.detail-status-row mark.refused{background:#fde7e9;color:#a52e3a}.detail-status-row mark.cancelled{background:#eef0f3;color:#5f6e80}
+.detail-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.detail-fields>div{display:flex;min-width:0;align-items:flex-start;gap:10px;padding:12px;border:1px solid #edf1f6;border-radius:9px;background:#fff}
+.detail-field-icon{display:grid;width:30px;height:30px;flex:none;place-items:center;border-radius:8px;background:#eef5fb;color:#2b6fa5}
+.detail-fields p{min-width:0;margin:0!important}.detail-fields small,.detail-fields strong{display:block}.detail-fields small{margin:1px 0 4px;color:#8392a5;font-size:10px}.detail-fields strong{color:#27486f;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
+.detail-description{padding:14px 15px;border-radius:10px;background:#f5f9fc}.detail-description>span{display:flex;align-items:center;gap:7px;color:#315677;font-size:12px;font-weight:800}.detail-description p{margin:8px 0 0;white-space:pre-wrap}
+.detail-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e7edf5}
+.detail-actions button{min-height:40px;padding:0 15px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+.close-details{border:1px solid #d5e0ec;background:#fff;color:#526b8d}.cancel-request{display:inline-flex;align-items:center;gap:7px;border:1px solid #f1b8bf;background:#fff7f7;color:#b43b4a}.cancel-request:hover{background:#ffebed}.cancel-request:disabled{opacity:.6;cursor:wait}
 .request-message{margin:18px 0;padding:25px;border:1px solid #d6e8fb;border-radius:12px;background:#fff;color:#496b9e;font-size:14px;line-height:1.6;text-align:center}
 .request-message p{margin:0 0 12px}
 .request .refused{background:#fde7e9;color:#a52e3a}
 .request .cancelled{background:#eef0f3;color:#5f6e80}
 @media(max-width:1050px){main{width:calc(100% - 40px)}.request{grid-template-columns:96px minmax(190px,1.3fr) minmax(175px,1fr) 150px 28px;gap:14px;padding:16px}.request>img{width:90px;height:96px}.request .pro{padding-left:14px}}
 @media(max-width:720px){main{width:auto;margin:18px 16px 30px}.request{grid-template-columns:76px minmax(0,1fr) 30px;gap:12px;padding:14px;min-height:0}.request>img{grid-row:1;width:76px;height:82px}.request>section:first-of-type{grid-column:2;grid-row:1}.request .pro{grid-column:1/3;grid-row:2;border-top:1px solid #e4edf7;border-left:0;padding:12px 0 0}.request .state{grid-column:1/3;grid-row:3;display:flex;align-items:center;gap:14px}.request .state button{flex:1;margin:0}.request>strong{grid-column:3;grid-row:1}}
+@media(max-width:520px){.detail-overlay{padding:12px}.detail-modal{padding:22px 17px;border-radius:13px}.detail-fields{grid-template-columns:1fr;gap:8px}.detail-title-row h2{font-size:19px}.detail-actions{justify-content:stretch}.detail-actions button{flex:1;padding:0 9px;font-size:11px}}
 </style>

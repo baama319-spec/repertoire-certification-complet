@@ -1,4 +1,8 @@
 import { api } from './api'
+
+export async function chargerStatistiquesAdministration () {
+  return api('/demandes/statistiques/')
+}
 import { ref } from 'vue'
 
 const liste = reponse => Array.isArray(reponse) ? reponse : reponse.results || []
@@ -21,7 +25,21 @@ export const chargerDemandes = async ({ contexte } = {}) => {
 
   return demandes
 }
+
+export async function chargerDemandesAdministration () {
+  const [demandes, statistiques] = await Promise.all([
+    chargerDemandes(),
+    chargerStatistiquesAdministration(),
+  ])
+  return { demandes, statistiques }
+}
+
+export const supprimerDemandeAdministration = async id => {
+  await api(`/demandes/${id}/`, { method: 'DELETE' })
+}
+
 export const creerDemande = async (donnees) => api('/demandes/', { method: 'POST', body: JSON.stringify(donnees) })
+export const annulerDemandeClient = async id => api(`/demandes/${id}/annuler/`, { method: 'POST' })
 export const accepterDemande = async (id) => api(`/demandes/${id}/accepter/`, { method: 'POST' })
 export const refuserDemande = async (id) => api(`/demandes/${id}/refuser/`, { method: 'POST' })
 

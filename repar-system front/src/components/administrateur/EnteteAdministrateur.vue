@@ -1,11 +1,11 @@
 <template>
   <header class="admin-header">
-    <label><span>⌕</span><input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" :placeholder="placeholder"></label>
+    <label><AppIcon name="search" :size="19"/><input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" :placeholder="placeholder"></label>
     <div class="header-actions">
-      <button class="alertes" aria-label="Alertes">♧<b>2</b></button><strong>Alertes (2)</strong><i></i>
+      <button class="alertes" aria-label="Alertes"><AppIcon name="bell" :size="21"/><b>2</b></button><strong>Alertes (2)</strong><i></i>
       <div ref="menu" class="profil-admin">
-        <button type="button" class="declencheur" :aria-expanded="ouvert" @click="ouvert = !ouvert"><Avatar class="user" :photo="utilisateur?.photo_profil" :nom="nomComplet"/><strong class="administrator">{{ nomComplet }}</strong><span>⌄</span></button>
-        <nav v-if="ouvert" class="menu" aria-label="Menu du compte"><button type="button" @click="seDeconnecter">⇥ <span>Déconnexion</span></button></nav>
+        <button type="button" class="declencheur" :aria-expanded="ouvert" @click="ouvert = !ouvert"><Avatar class="user" :photo="utilisateur?.photo_profil" :nom="nomComplet"/><strong class="administrator">{{ nomComplet }}</strong><AppIcon name="chevron-down" :size="14"/></button>
+        <nav v-if="ouvert" class="menu" aria-label="Menu du compte"><button type="button" @click="seDeconnecter"><AppIcon name="logout" :size="15"/> <span>Déconnexion</span></button></nav>
       </div>
     </div>
   </header>

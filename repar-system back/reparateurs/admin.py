@@ -1,7 +1,13 @@
 from django.contrib import admin, messages
 from django.utils import timezone
 
-from .models import Reparateur
+from .models import Reparateur, ReparateurDocument
+
+
+class ReparateurDocumentInline(admin.TabularInline):
+    model = ReparateurDocument
+    extra = 0
+    fields = ("type_document", "document")
 
 
 @admin.register(Reparateur)
@@ -16,9 +22,10 @@ class ReparateurAdmin(admin.ModelAdmin):
     search_fields = ("utilisateur__nom", "utilisateur__prenom", "utilisateur__email")
     filter_horizontal = ("specialites", "zones_intervention")
     readonly_fields = ("date_verification",)
+    inlines = (ReparateurDocumentInline,)
     fields = (
-        "utilisateur", "description", "annee_experience", "specialites",
-        "zones_intervention", "statut_verification", "motif_refus",
+        "utilisateur", "description", "annee_experience", "photo_carte_identite",
+        "specialites", "zones_intervention", "statut_verification", "motif_refus",
         "profil_verifie", "date_verification",
     )
     actions = ("valider_candidatures", "certifier_profils", "refuser_candidatures")
@@ -39,7 +46,7 @@ class ReparateurAdmin(admin.ModelAdmin):
             motif_refus="",
             date_verification=timezone.now(),
         )
-        self.message_user(request, f"{nombre} candidature(s) validée(s), sans certification Pro.", messages.SUCCESS)
+        self.message_user(request, f"{nombre} candidature(s) validée(s) : ces comptes peuvent maintenant apparaître comme réparateurs et accéder à l’espace professionnel, sans certification Pro.", messages.SUCCESS)
 
     @admin.action(description="Certifier Pro les profils sélectionnés")
     def certifier_profils(self, request, queryset):

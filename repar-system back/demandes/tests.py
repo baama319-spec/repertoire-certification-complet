@@ -70,7 +70,10 @@ class CreationDemandeTests(APITestCase):
 			prenom="Aziz",
 			role=user_model.Role.CLIENT,
 		)
-		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+		repairer_profile = Reparateur.objects.create(
+			utilisateur=repairer_user,
+			statut_verification=Reparateur.StatutVerification.VALIDEE,
+		)
 		client_user = user_model.objects.create_user(
 			email="autre-client@example.com",
 			password="password123",
@@ -96,6 +99,24 @@ class CreationDemandeTests(APITestCase):
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual([item["id"] for item in response.data["results"]], [demande.pk])
 
+	def test_candidat_en_attente_ne_peut_pas_voir_les_demandes_entrantes(self):
+		user_model = get_user_model()
+		candidat = user_model.objects.create_user(
+			email="candidat-pending@example.com", password="password123", nom="Candidat", prenom="Test",
+		)
+		profil = Reparateur.objects.create(utilisateur=candidat)
+		DemandeMiseEnRelation.objects.create(
+			client=self.client_profil,
+			reparateur=profil,
+			localisation=self.localisation,
+			description_probleme="Demande assignée avant validation.",
+		)
+
+		self.client.force_authenticate(candidat)
+		response = self.client.get("/api/demandes/?contexte=reparateur")
+
+		self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
 	@patch("demandes.views.envoyer_notification_n8n")
 	def test_creation_demande_ciblee_notifie_le_reparateur(self, notifier_n8n):
 		user_model = get_user_model()
@@ -106,7 +127,10 @@ class CreationDemandeTests(APITestCase):
 			prenom="Reparateur",
 			role=user_model.Role.REPARATEUR,
 		)
-		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+		repairer_profile = Reparateur.objects.create(
+			utilisateur=repairer_user,
+			statut_verification=Reparateur.StatutVerification.VALIDEE,
+		)
 
 		response = self.client.post(
 			"/api/demandes/",
@@ -132,6 +156,24 @@ class CreationDemandeTests(APITestCase):
 			"nouvelle_demande",
 		)
 
+	def test_demande_ne_peut_pas_etre_ciblee_vers_un_candidat_non_valide(self):
+		candidat = get_user_model().objects.create_user(
+			email="candidat-non-valide@example.com", password="password123", nom="Candidat", prenom="Test",
+		)
+		profil = Reparateur.objects.create(utilisateur=candidat)
+
+		response = self.client.post(
+			"/api/demandes/",
+			{
+				"description_probleme": "Mon téléphone ne charge plus depuis hier.",
+				"localisation": self.localisation.pk,
+				"reparateur": profil.pk,
+			},
+			format="json",
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class AcceptationDemandeTests(APITestCase):
 	@patch("demandes.views.envoyer_notification_n8n")
@@ -152,7 +194,10 @@ class AcceptationDemandeTests(APITestCase):
 			role=user_model.Role.REPARATEUR,
 		)
 		client_profile = Client.objects.create(utilisateur=client_user)
-		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+		repairer_profile = Reparateur.objects.create(
+			utilisateur=repairer_user,
+			statut_verification=Reparateur.StatutVerification.VALIDEE,
+		)
 		localisation = Localisation.objects.create(
 			nom="Dakar Plateau",
 			adresse="Dakar Plateau",
@@ -204,7 +249,10 @@ class AcceptationDemandeTests(APITestCase):
 			nom="Client",
 			prenom="Aly",
 		)
-		repairer_profile = Reparateur.objects.create(utilisateur=repairer_user)
+		repairer_profile = Reparateur.objects.create(
+			utilisateur=repairer_user,
+			statut_verification=Reparateur.StatutVerification.VALIDEE,
+		)
 		client_profile = Client.objects.create(utilisateur=client_user)
 		demande = DemandeMiseEnRelation.objects.create(
 			client=client_profile,
@@ -226,6 +274,61 @@ class AcceptationDemandeTests(APITestCase):
 		self.assertEqual(demande.statut, DemandeMiseEnRelation.Statut.ACCEPTEE)
 		notifier_n8n.assert_called_once()
 
+
+class AnnulationDemandeClientTests(APITestCase):
+	def setUp(self):
+		user_model = get_user_model()
+		self.client_user = user_model.objects.create_user(
+			email="proprietaire@example.com", password="password123", nom="Client", prenom="Propriétaire",
+			role=user_model.Role.CLIENT,
+		)
+		self.autre_client = user_model.objects.create_user(
+			email="autre@example.com", password="password123", nom="Autre", prenom="Client",
+			role=user_model.Role.CLIENT,
+		)
+		self.profil_client = Client.objects.create(utilisateur=self.client_user)
+		self.localisation = Localisation.objects.create(
+			nom="Dakar Plateau", adresse="Dakar Plateau", quartier="Dakar Plateau", ville="Dakar",
+		)
+		self.demande = DemandeMiseEnRelation.objects.create(
+			client=self.profil_client,
+			localisation=self.localisation,
+			description_probleme="Le téléphone ne charge plus depuis hier.",
+		)
+
+	def test_client_peut_annuler_sa_demande_en_attente(self):
+		self.client.force_authenticate(self.client_user)
+
+		response = self.client.post(f"/api/demandes/{self.demande.pk}/annuler/", {}, format="json")
+
+		self.assertEqual(response.status_code, status.HTTP_200_OK)
+		self.demande.refresh_from_db()
+		self.assertEqual(self.demande.statut, DemandeMiseEnRelation.Statut.ANNULEE)
+		self.assertIsNotNone(self.demande.date_reponse)
+
+	def test_autre_client_ne_peut_pas_annuler_la_demande(self):
+		self.client.force_authenticate(self.autre_client)
+
+		response = self.client.post(f"/api/demandes/{self.demande.pk}/annuler/", {}, format="json")
+
+		self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+		self.demande.refresh_from_db()
+		self.assertEqual(self.demande.statut, DemandeMiseEnRelation.Statut.EN_ATTENTE)
+
+	def test_client_ne_peut_pas_annuler_une_demande_deja_acceptee(self):
+		self.demande.statut = DemandeMiseEnRelation.Statut.ACCEPTEE
+		self.demande.save(update_fields=["statut"])
+		self.client.force_authenticate(self.client_user)
+
+		response = self.client.post(f"/api/demandes/{self.demande.pk}/annuler/", {}, format="json")
+
+		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.demande.refresh_from_db()
+		self.assertEqual(self.demande.statut, DemandeMiseEnRelation.Statut.ACCEPTEE)
+
+
+
+class RefusationDemandeTests(APITestCase):
 	@patch("demandes.views.envoyer_notification_n8n")
 	def test_reparateur_refuse_demande_et_mise_a_jour_du_statut(self, notifier_n8n):
 		user_model = get_user_model()
@@ -245,7 +348,10 @@ class AcceptationDemandeTests(APITestCase):
 		)
 		demande = DemandeMiseEnRelation.objects.create(
 			client=Client.objects.create(utilisateur=client_user),
-			reparateur=Reparateur.objects.create(utilisateur=repairer_user),
+			reparateur=Reparateur.objects.create(
+				utilisateur=repairer_user,
+				statut_verification=Reparateur.StatutVerification.VALIDEE,
+			),
 			localisation=Localisation.objects.create(
 				nom="Dakar Plateau",
 				adresse="Dakar Plateau",

@@ -20,6 +20,7 @@ import MesAvis from '../views/client/MesAvis.vue'
 import DevenirReparateur from '../views/public/DevenirReparateur.vue'
 import Diagnostic from '../views/public/Diagnostic.vue'
 import DemandeReparation from '../views/public/DemandeReparation.vue'
+import { routeAccueilUtilisateur } from '../services/serviceAuthentification'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -50,6 +51,7 @@ const router = createRouter({
 })
 
 const lireUtilisateur = () => {
+  if (!localStorage.getItem('reparsystem-token') && !sessionStorage.getItem('reparsystem-token')) return null
   const brut = localStorage.getItem('reparsystem-utilisateur') || sessionStorage.getItem('reparsystem-utilisateur')
   try { return brut ? JSON.parse(brut) : null } catch (_) { return null }
 }
@@ -60,6 +62,10 @@ router.beforeEach((to) => {
   const footerPublicVisible = ['/', '/reparateurs'].includes(to.path)
   document.body.classList.toggle('page-no-footer', Boolean(utilisateur) && !pageSansFooter && !footerPublicVisible)
 
+  if (utilisateur && ['/connexion', '/inscription'].includes(to.path)) {
+    return routeAccueilUtilisateur(utilisateur)
+  }
+
   if (to.path.startsWith('/admin') && utilisateur?.role !== 'ADMINISTRATEUR') {
     return { path: '/connexion', query: { redirection: to.fullPath } }
   }
@@ -69,10 +75,11 @@ router.beforeEach((to) => {
   if (['/diagnostic', '/demande-reparation'].includes(to.path) && utilisateur?.role !== 'CLIENT') {
     return { path: '/connexion', query: { redirection: to.fullPath } }
   }
-  const profilProfessionnelAccessible = Boolean(utilisateur?.profil_reparateur)
-  const reparateurVerifie = utilisateur?.role === 'REPARATEUR' || utilisateur?.profil_reparateur?.profil_verifie
-  if (to.path.startsWith('/pro') && !profilProfessionnelAccessible && !reparateurVerifie) {
-    return { path: '/connexion', query: { redirection: to.fullPath } }
+  const reparateurValide = utilisateur?.actif !== false && utilisateur?.profil_reparateur?.statut_verification === 'VALIDEE'
+  if (to.path.startsWith('/pro') && !reparateurValide) {
+    return utilisateur
+      ? { path: '/devenir-reparateur', query: { statut: 'validation-requise' } }
+      : { path: '/connexion', query: { redirection: to.fullPath } }
   }
 })
 

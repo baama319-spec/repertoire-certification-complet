@@ -36,7 +36,7 @@ onBeforeUnmount(() => observer?.disconnect())
         <div class="feature-copy"><h2>Votre réparation,<br>bien accompagnée.</h2><p>Échangez directement avec le professionnel, organisez l’intervention et retrouvez vos demandes depuis votre espace.</p></div>
       </article>
     </div>
-    <RouterLink class="how-action" to="/reparateurs">Trouver un réparateur <span aria-hidden="true">↗</span></RouterLink>
+    <RouterLink class="how-action" to="/reparateurs">Trouver un réparateur <AppIcon name="arrow-right" :size="16" /></RouterLink>
   </section>
 </template>
 

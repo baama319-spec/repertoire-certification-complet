@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
+from commun.permissions import EstAdministrateur
 from django.utils import timezone
 from utilisateurs.models import Utilisateur
 from clients.models import Client
@@ -24,11 +25,65 @@ class DemandeViewSet(ModelViewSet):
         if user.role == Utilisateur.Role.ADMINISTRATEUR: return qs
         action_reparateur = self.action in {"accepter", "refuser"}
         if self.request.query_params.get("contexte") == "reparateur" or action_reparateur:
-            if not hasattr(user, "profil_reparateur"):
-                raise PermissionDenied("Aucun profil réparateur n’est associé à ce compte.")
-            return qs.filter(reparateur__utilisateur=user)
+            profil = Reparateur.objects.filter(
+                utilisateur=user,
+                statut_verification=Reparateur.StatutVerification.VALIDEE,
+                utilisateur__actif=True,
+            ).exists()
+            if not profil:
+                raise PermissionDenied("Votre candidature réparateur doit être validée par un administrateur.")
+            return qs.filter(
+                reparateur__utilisateur=user,
+                reparateur__statut_verification=Reparateur.StatutVerification.VALIDEE,
+                reparateur__utilisateur__actif=True,
+            )
         if user.role == Utilisateur.Role.CLIENT: return qs.filter(client__utilisateur=user)
-        return qs.filter(reparateur__utilisateur=user)
+        return qs.filter(
+            reparateur__utilisateur=user,
+            reparateur__statut_verification=Reparateur.StatutVerification.VALIDEE,
+            reparateur__utilisateur__actif=True,
+        )
+
+    @action(detail=False, methods=["get"], permission_classes=[EstAdministrateur])
+    def statistiques(self, request):
+        """Indicateurs agrégés destinés exclusivement au tableau de bord admin."""
+        from django.db.models import Count
+        from clients.models import Client
+        from localisations.models import Localisation
+
+        demandes = self.queryset
+        total_demandes = demandes.count()
+        demandes_acceptees = demandes.filter(
+            statut=DemandeMiseEnRelation.Statut.ACCEPTEE
+        ).count()
+        reparateurs_actifs = Reparateur.objects.filter(
+            statut_verification=Reparateur.StatutVerification.VALIDEE,
+            utilisateur__actif=True,
+        ).count()
+
+        repartition = (
+            demandes.values("specialite__nom")
+            .annotate(count=Count("id"))
+            .order_by("-count", "specialite__nom")
+        )
+        return Response({
+            "clients_inscrits": Client.objects.count(),
+            "reparateurs_actifs": reparateurs_actifs,
+            "demandes_totales": total_demandes,
+            "zones_couvertes": Localisation.objects.filter(actif=True).count(),
+            "demandes_acceptees": demandes_acceptees,
+            "taux_acceptation": round(
+                (demandes_acceptees / total_demandes * 100) if total_demandes else 0,
+                1,
+            ),
+            "repartition_demandes": [
+                {
+                    "nom": item["specialite__nom"] or "Sans spécialité",
+                    "nombre": item["count"],
+                }
+                for item in repartition
+            ],
+        })
     def perform_create(self, serializer):
         if self.request.user.role != Utilisateur.Role.CLIENT:
             raise PermissionDenied("Seul un client peut créer une demande.")
@@ -56,10 +111,32 @@ class DemandeViewSet(ModelViewSet):
                 "nouvelle_demande",
             )
 
+    @action(detail=True, methods=["post"], url_path="annuler")
+    def annuler(self, request, pk=None):
+        """Permet au client propriétaire d'annuler une demande encore en attente."""
+        demande = self.get_object()
+        if request.user.role != Utilisateur.Role.CLIENT or demande.client.utilisateur_id != request.user.id:
+            return Response({"detail": "Vous ne pouvez pas annuler cette demande."}, status=status.HTTP_403_FORBIDDEN)
+        if demande.statut != DemandeMiseEnRelation.Statut.EN_ATTENTE:
+            return Response({"detail": "Seules les demandes en attente peuvent être annulées."}, status=status.HTTP_400_BAD_REQUEST)
+        demande.statut = DemandeMiseEnRelation.Statut.ANNULEE
+        demande.date_reponse = timezone.now()
+        demande.save(update_fields=["statut", "date_reponse"])
+        if demande.reparateur_id:
+            Notification.objects.create(
+                utilisateur=demande.reparateur.utilisateur,
+                titre="Demande annulée par le client",
+                message=f"Le client a annulé la demande de réparation #{demande.pk}.",
+                type=Notification.Type.SYSTEME,
+            )
+        return Response(self.get_serializer(demande).data)
+
     def _autoriser_reparateur_assigne(self, request, demande):
         profil = Reparateur.objects.filter(utilisateur=request.user).first()
         return bool(
             profil
+            and profil.statut_verification == Reparateur.StatutVerification.VALIDEE
+            and request.user.actif
             and request.user.role in (Utilisateur.Role.REPARATEUR, Utilisateur.Role.CLIENT)
             and demande.reparateur_id == profil.id
         )

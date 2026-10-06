@@ -8,11 +8,14 @@ from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.authtoken.models import Token
 from django.utils import timezone
+from django.db.models import Avg, Count
 from utilisateurs.models import Utilisateur
-from .models import Reparateur
+from .models import Reparateur, ReparateurDocument
 from .serializers import ReparateurSerializer
+
+
 class ReparateurViewSet(ModelViewSet):
-    queryset = Reparateur.objects.select_related("utilisateur").prefetch_related("specialites", "zones_intervention"); serializer_class = ReparateurSerializer
+    queryset = Reparateur.objects.select_related("utilisateur").prefetch_related("specialites", "zones_intervention").annotate(note_moyenne=Avg("avis__note"), nombre_avis=Count("avis", distinct=True)); serializer_class = ReparateurSerializer
     def get_permissions(self):
         return [AllowAny()] if self.action in ("list", "retrieve") else [IsAuthenticated()]
 
@@ -46,13 +49,13 @@ class ReparateurViewSet(ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Les profils sont publics en lecture, mais un réparateur ne peut
-        # modifier que son propre profil ; l'administrateur garde la vue globale.
         if self.action in ("list", "retrieve"):
-            # Le public ne voit que les profils réellement vérifiés.
-            if not self.request.user.is_authenticated:
-                return queryset.filter(profil_verifie=True)
-            return queryset
+            if self.request.user.is_authenticated and self.request.user.role == Utilisateur.Role.ADMINISTRATEUR:
+                return queryset
+            return queryset.filter(
+                statut_verification=Reparateur.StatutVerification.VALIDEE,
+                utilisateur__actif=True,
+            )
         if self.request.user.role == Utilisateur.Role.ADMINISTRATEUR:
             return queryset
         return queryset.filter(utilisateur=self.request.user)
@@ -79,7 +82,8 @@ class ReparateurViewSet(ModelViewSet):
             return Response({"detail": "La latitude et la longitude sont obligatoires."}, status=400)
 
         queryset = self.queryset.filter(
-            profil_verifie=True,
+            statut_verification=Reparateur.StatutVerification.VALIDEE,
+            utilisateur__actif=True,
             latitude__isnull=False,
             longitude__isnull=False,
         )
@@ -108,12 +112,29 @@ class ReparateurViewSet(ModelViewSet):
             return Response({"profil": self.get_serializer(profil).data})
         if profil and profil.statut_verification != Reparateur.StatutVerification.REFUSEE:
             return Response({"detail": "Une candidature est déjà en cours ou vérifiée."}, status=status.HTTP_409_CONFLICT)
+
+        photo_carte = request.FILES.get("photo_carte_identite") or request.data.get("photo_carte_identite")
+        if not profil and not photo_carte:
+            return Response({"photo_carte_identite": ["Une photo de la carte d’identité est obligatoire."]}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = self.get_serializer(profil, data=request.data, partial=bool(profil))
         serializer.is_valid(raise_exception=True)
         creation = profil is None
         profil = serializer.save(utilisateur=request.user) if creation else serializer.save(
             statut_verification=Reparateur.StatutVerification.EN_ATTENTE, motif_refus="", profil_verifie=False
         )
+
+        if "photo_carte_identite" in request.FILES:
+            profil.photo_carte_identite = request.FILES["photo_carte_identite"]
+            profil.save(update_fields=("photo_carte_identite",))
+
+        documents = request.FILES.getlist("documents")
+        if documents:
+            document_types = request.POST.getlist("document_types")
+            for index, fichier in enumerate(documents):
+                type_document = document_types[index] if index < len(document_types) and document_types[index].strip() else "AUTRE"
+                ReparateurDocument.objects.create(reparateur=profil, type_document=type_document, document=fichier)
+
         return Response({"profil": self.get_serializer(profil).data}, status=status.HTTP_201_CREATED if creation else status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"])

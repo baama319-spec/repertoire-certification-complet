@@ -8,7 +8,7 @@ export const chargerAvis = async () => {
 	let pagesSuivantes = true
 
 	while (pagesSuivantes) {
-		const reponse = await api(`/avis/?page=${page}`)
+		const reponse = await api(`/avis/?page=${page}&contexte=reparateur`)
 		if (Array.isArray(reponse)) return reponse
 		avis.push(...liste(reponse))
 		pagesSuivantes = Boolean(reponse.next)

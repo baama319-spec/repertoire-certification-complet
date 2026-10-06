@@ -3,9 +3,9 @@ defineProps({ avis: { type: Object, required: true } })
 </script>
 <template>
   <article class="carte-avis">
-    <section class="client"><span class="avatar">{{ avis.initiales }}</span><div><h2>{{ avis.client }}</h2><p class="etoiles">★★★★★ <small>{{ avis.note }} / 5.0</small></p></div><p class="prestation">⚒　 Prestation :　{{ avis.prestation }}</p></section>
-    <section class="retour"><p>{{ avis.texte }}</p><div><span>●　 Intervention validée</span><small>♦　 {{ avis.lieu }}</small></div></section>
-    <aside><p>▣　 {{ avis.date }}</p><button>⋮</button></aside>
+    <section class="client"><span class="avatar">{{ avis.initiales }}</span><div><h2>{{ avis.client }}</h2><p class="etoiles"><AppIcon v-for="n in avis.note" :key="n" name="star" :size="17" fill="currentColor" /> <small>{{ avis.note }} / 5.0</small></p></div><p class="prestation"><AppIcon name="wrench" :size="14" /> Prestation : {{ avis.prestation }}</p></section>
+    <section class="retour"><p>{{ avis.texte }}</p><div><span><AppIcon name="check-circle" :size="14" /> Intervention validée</span><small><AppIcon name="pin" :size="14" /> {{ avis.lieu }}</small></div></section>
+    <aside><p><AppIcon name="calendar" :size="14" /> {{ avis.date }}</p><button aria-label="Plus d’options"><AppIcon name="more" :size="18" /></button></aside>
   </article>
 </template>
 <style scoped>

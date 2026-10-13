@@ -6,5 +6,6 @@ import './style.css'
 import './styles/admin-clients-table.css'
 import './styles/admin-page-headers.css'
 import './styles/branding.css'
+import './styles/design-system.css'
 
 createApp(App).component('AppIcon', AppIcon).use(router).mount('#app')

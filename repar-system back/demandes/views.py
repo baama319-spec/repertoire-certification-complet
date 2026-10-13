@@ -16,9 +16,19 @@ from .serializers import DemandeSerializer, PieceJointeSerializer
 class DemandeViewSet(ModelViewSet):
     queryset = DemandeMiseEnRelation.objects.select_related(
         "client__utilisateur", "reparateur__utilisateur", "localisation", "specialite"
-    ).all()
+    ).prefetch_related("pieces_jointes").all()
     serializer_class = DemandeSerializer
     permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        photos = request.FILES.getlist("photos")
+        if len(photos) > 3:
+            return Response(
+                {"photos": ["Vous pouvez joindre jusqu'à 3 photos maximum."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
         qs = super().get_queryset()
         user = self.request.user
@@ -91,6 +101,15 @@ class DemandeViewSet(ModelViewSet):
         if client is None:
             raise PermissionDenied("Le compte courant ne possède pas de profil client.")
         demande = serializer.save(client=client)
+
+        photos = self.request.FILES.getlist("photos")
+        for fichier in photos[:3]:
+            PieceJointe.objects.create(
+                demande=demande,
+                nom_fichier=fichier.name,
+                fichier=fichier,
+                type="PHOTO",
+            )
 
         # Une demande ciblant un réparateur le prévient à la fois dans
         # l'application et par le workflow e-mail n8n existant.

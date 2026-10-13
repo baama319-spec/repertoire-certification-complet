@@ -56,14 +56,17 @@ ils restent dans `medias/`, à copier séparément si le déploiement change de 
 
 Diagnostic IA texte :
 - endpoint authentifié : POST /api/ia/diagnostic/
-- configuration : HUGGINGFACE_API_TOKEN
-- modèle optionnel : HUGGINGFACE_DIAGNOSTIC_MODEL
+- fournisseur : OpenRouter
+- configuration : OPENROUTER_API_KEY
+- modèle optionnel : OPENROUTER_DIAGNOSTIC_MODEL (par défaut : google/gemini-2.5-flash)
 
-Copier .env.example vers .env, puis remplacer hf_votre_token_ici par un token
-Hugging Face disposant de l'accès aux modèles Inference Providers. Redémarrer
+Copier .env.example vers .env, puis remplacer la valeur d'exemple par une clé
+créée dans le compte OpenRouter. Garder cette clé secrète et ne jamais la committer.
+Le routage sélectionne le fournisseur disponible avec la plus faible latence.
+OpenRouter peut exiger des crédits selon le modèle et le fournisseur. Redémarrer
 Django après toute modification de .env.
 
-Le modèle utilisé par défaut est meta-llama/Llama-3.1-8B-Instruct. La réponse est une
+Le modèle utilisé par défaut est google/gemini-2.5-flash. La réponse est une
 aide au diagnostic et doit être confirmée par un réparateur professionnel.
 
 Notifications e-mail (n8n) :

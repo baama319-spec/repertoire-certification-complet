@@ -31,7 +31,7 @@ class DiagnosticApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("description", response.data)
 
-    @patch.dict("os.environ", {"HUGGINGFACE_API_TOKEN": "test-token"})
+    @patch.dict("os.environ", {"OPENROUTER_API_KEY": "test-token"})
     @patch("diagnostics.services.requests.post")
     def test_diagnostic_returns_model_json(self, post):
         self.client.force_authenticate(self.user)
@@ -53,6 +53,9 @@ class DiagnosticApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["categorie"], "Électronique")
         post.assert_called_once()
+        self.assertEqual(post.call_args.args[0], "https://openrouter.ai/api/v1/chat/completions")
+        self.assertEqual(post.call_args.kwargs["json"]["model"], "google/gemini-2.5-flash")
+        self.assertEqual(post.call_args.kwargs["json"]["provider"], {"sort": "latency"})
 
     def test_prompt_includes_safety_warning_for_self_repair(self):
         prompt = DiagnosticIAService._prompt_system()

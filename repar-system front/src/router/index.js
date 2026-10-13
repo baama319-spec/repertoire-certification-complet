@@ -20,7 +20,7 @@ import MesAvis from '../views/client/MesAvis.vue'
 import DevenirReparateur from '../views/public/DevenirReparateur.vue'
 import Diagnostic from '../views/public/Diagnostic.vue'
 import DemandeReparation from '../views/public/DemandeReparation.vue'
-import { routeAccueilUtilisateur } from '../services/serviceAuthentification'
+import { actualiserUtilisateur, routeAccueilUtilisateur } from '../services/serviceAuthentification'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -56,8 +56,11 @@ const lireUtilisateur = () => {
   try { return brut ? JSON.parse(brut) : null } catch (_) { return null }
 }
 
-router.beforeEach((to) => {
-  const utilisateur = lireUtilisateur()
+router.beforeEach(async (to) => {
+  let utilisateur = lireUtilisateur()
+  if (to.path.startsWith('/pro') && utilisateur) {
+    try { utilisateur = await actualiserUtilisateur() || utilisateur } catch (_) { utilisateur = lireUtilisateur() }
+  }
   const pageSansFooter = ['/connexion', '/inscription'].includes(to.path)
   const footerPublicVisible = ['/', '/reparateurs'].includes(to.path)
   document.body.classList.toggle('page-no-footer', Boolean(utilisateur) && !pageSansFooter && !footerPublicVisible)
@@ -75,7 +78,7 @@ router.beforeEach((to) => {
   if (['/diagnostic', '/demande-reparation'].includes(to.path) && utilisateur?.role !== 'CLIENT') {
     return { path: '/connexion', query: { redirection: to.fullPath } }
   }
-  const reparateurValide = utilisateur?.actif !== false && utilisateur?.profil_reparateur?.statut_verification === 'VALIDEE'
+  const reparateurValide = utilisateur?.actif !== false && (utilisateur?.profil_reparateur?.statut_verification === 'VALIDEE' || utilisateur?.profil_reparateur?.profil_verifie === true)
   if (to.path.startsWith('/pro') && !reparateurValide) {
     return utilisateur
       ? { path: '/devenir-reparateur', query: { statut: 'validation-requise' } }

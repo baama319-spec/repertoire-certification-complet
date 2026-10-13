@@ -21,6 +21,7 @@ class DemandeSerializer(ModelSerializer):
     reparateur_detail = serializers.SerializerMethodField()
     localisation_detail = serializers.SerializerMethodField()
     specialite_detail = serializers.SerializerMethodField()
+    pieces_jointes = serializers.SerializerMethodField()
     def get_client_detail(self, obj):
         u = obj.client.utilisateur
         return {"id": obj.client_id, "nom": f"{u.prenom} {u.nom}", "telephone": u.telephone, "photo_profil": u.photo_profil.url if u.photo_profil else None}
@@ -34,6 +35,20 @@ class DemandeSerializer(ModelSerializer):
     def get_specialite_detail(self, obj):
         if not obj.specialite_id: return None
         return {"id": obj.specialite_id, "nom": obj.specialite.nom}
+    def get_pieces_jointes(self, obj):
+        request = self.context.get("request")
+        pieces = []
+        for piece in obj.pieces_jointes.all():
+            url = piece.fichier.url if piece.fichier else None
+            if url and request:
+                url = request.build_absolute_uri(url)
+            pieces.append({
+                "id": piece.pk,
+                "nom_fichier": piece.nom_fichier,
+                "fichier": url,
+                "type": piece.type,
+            })
+        return pieces
     def validate_description_probleme(self, value):
         value = value.strip()
         if len(value) < 10:

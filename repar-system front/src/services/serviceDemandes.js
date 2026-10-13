@@ -38,7 +38,22 @@ export const supprimerDemandeAdministration = async id => {
   await api(`/demandes/${id}/`, { method: 'DELETE' })
 }
 
-export const creerDemande = async (donnees) => api('/demandes/', { method: 'POST', body: JSON.stringify(donnees) })
+const preparerFormDataDemande = (donnees, photos = []) => {
+  const formData = new FormData()
+  Object.entries(donnees).forEach(([cle, valeur]) => {
+    if (valeur === null || valeur === undefined || valeur === '') return
+    formData.append(cle, valeur)
+  })
+  photos.slice(0, 3).forEach((fichier) => {
+    if (fichier instanceof File) formData.append('photos', fichier)
+  })
+  return formData
+}
+
+export const creerDemande = async (donnees, photos = []) => api('/demandes/', {
+  method: 'POST',
+  body: preparerFormDataDemande(donnees, photos),
+})
 export const annulerDemandeClient = async id => api(`/demandes/${id}/annuler/`, { method: 'POST' })
 export const accepterDemande = async (id) => api(`/demandes/${id}/accepter/`, { method: 'POST' })
 export const refuserDemande = async (id) => api(`/demandes/${id}/refuser/`, { method: 'POST' })

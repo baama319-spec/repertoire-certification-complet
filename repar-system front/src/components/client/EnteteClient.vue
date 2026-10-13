@@ -15,16 +15,20 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthentification } from '../../services/serviceAuthentification'
+import { actualiserUtilisateur, useAuthentification } from '../../services/serviceAuthentification'
+import { api } from '../../services/api'
 import Avatar from '../commun/Avatar.vue'
-import { computed } from 'vue'
 
 const router = useRouter()
 const { deconnecter, utilisateur } = useAuthentification()
 const nomComplet = computed(() => [utilisateur.value?.prenom, utilisateur.value?.nom].filter(Boolean).join(' ') || 'Mon compte')
-const estReparateurVerifie = computed(() => utilisateur.value?.actif !== false && utilisateur.value?.profil_reparateur?.statut_verification === 'VALIDEE')
+const profilReparateur = ref(null)
+const estReparateurVerifie = computed(() => {
+  const profil = profilReparateur.value || utilisateur.value?.profil_reparateur
+  return utilisateur.value?.actif !== false && (profil?.statut_verification === 'VALIDEE' || profil?.profil_verifie === true)
+})
 const ouvert = ref(false)
 const menu = ref(null)
 const fermer = () => { ouvert.value = false }
@@ -34,8 +38,26 @@ const seDeconnecter = async () => {
   router.replace('/')
 }
 const clicExterieur = (event) => { if (menu.value && !menu.value.contains(event.target)) fermer() }
-onMounted(() => document.addEventListener('click', clicExterieur))
-onBeforeUnmount(() => document.removeEventListener('click', clicExterieur))
+const actualiserCompte = async () => {
+  if (document.visibilityState !== 'visible') return
+  actualiserUtilisateur().catch(() => {})
+  try {
+    profilReparateur.value = await api('/reparateurs/moi/')
+  } catch (_) {
+    profilReparateur.value = null
+  }
+}
+onMounted(() => {
+  document.addEventListener('click', clicExterieur)
+  document.addEventListener('visibilitychange', actualiserCompte)
+  window.addEventListener('focus', actualiserCompte)
+  actualiserCompte()
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('click', clicExterieur)
+  document.removeEventListener('visibilitychange', actualiserCompte)
+  window.removeEventListener('focus', actualiserCompte)
+})
 </script>
 
 <style scoped>

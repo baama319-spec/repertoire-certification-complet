@@ -27,16 +27,22 @@ onMounted(() => {
 })
 </script>
 <template>
-	<EntetePublic />
+	<div class="search-page-header"><EntetePublic /></div>
 	<main>
 		<section class="search-hero"><h1>Quel professionnel recherchez-vous ?</h1><form class="wide-search" @submit.prevent><label><AppIcon name="search" :size="17"/><input v-model.trim="recherche" placeholder="Spécialité, service ou zone..."></label><button>Rechercher</button></form></section>
 		<section class="results"><div class="results-head"><h2>{{ visibles.length }} réparateur{{ visibles.length > 1 ? 's' : '' }} trouvé{{ visibles.length > 1 ? 's' : '' }}</h2></div><p v-if="chargement">Chargement des réparateurs…</p><p v-else-if="erreur">{{ erreur }}</p><p v-else-if="!visibles.length">Aucun réparateur ne correspond à votre recherche.</p><div v-else class="pro-grid result-grid"><CarteReparateur v-for="p in visibles" :key="p.id" :person="p" search /></div></section>
-		<CarteProximite :professionals="reparateurs" />
+		<CarteProximite class="search-proximity" :professionals="reparateurs" />
 	</main>
 	<PiedDePage />
 </template>
 
 <style scoped>
+.search-page-header { display: contents; }
+.search-page-header :deep(.header) { background: #fff; color: #102b3b; border-bottom-color: #e6edf0; }
+.search-page-header :deep(.header a), .search-page-header :deep(.header .brand) { color: #102b3b; }
+.search-page-header :deep(.header .account-link) { border-color: #d6e1e5; color: #102b3b; }
+.search-page-header :deep(.header .signup), .search-page-header :deep(.header .logout) { color: #fff; }
+.search-hero { background: #081329; }
 .wide-search label {
 	display: flex;
 	align-items: center;
@@ -65,5 +71,15 @@ onMounted(() => {
 }
 .results {
 	background: #edf3f8;
+	padding-top: 20px;
+	padding-bottom: 40px;
+}
+.results-head { margin-bottom: 18px; }
+.results-head h2 { font-size: 15px; }
+.search-proximity { padding-top: 38px; }
+@media (min-width: 981px) {
+	.search-proximity :deep(.proximity-layout) {
+		grid-template-columns: 165px minmax(0, 1fr) 300px;
+	}
 }
 </style>

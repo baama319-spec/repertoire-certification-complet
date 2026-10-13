@@ -82,7 +82,7 @@ const reinitialiserFiltres = () => {
 
 const distanceLabel = item => {
   const distance = distanceInKm(item)
-  return distance == null ? 'Distance indisponible' : `${distance.toFixed(1)} km`
+  return distance == null ? '' : `${distance.toFixed(1)} km`
 }
 
 const drivingTimeLabel = item => {
@@ -265,7 +265,7 @@ onBeforeUnmount(() => {
         <div class="nearby-list-header"><strong>{{ filtered.length }} artisans trouvés</strong><span>Les plus proches</span></div>
         <button v-for="item in filtered.slice(0, 5)" :key="item.id" class="nearby-card" :class="{ active: selectedId === item.id }" type="button" @click="selectProfessional(item)">
           <img :src="item.image" :alt="item.name">
-          <span class="nearby-info"><strong>{{ item.name }}</strong><small>{{ item.specialty }}</small><span class="rating"><template v-if="item.score !== '—'"><AppIcon name="star" :size="12" fill="currentColor" /> {{ item.score }}</template><template v-else>Aucun avis</template> <em>·</em> {{ distanceLabel(item) }}</span></span>
+          <span class="nearby-info"><strong>{{ item.name }}</strong><small>{{ item.specialty }}</small><span class="rating"><template v-if="item.score !== '—'"><AppIcon name="star" :size="12" fill="currentColor" /> {{ item.score }}</template><template v-else>Aucun avis</template></span><small v-if="distanceInKm(item) != null" class="nearby-distance">{{ distanceLabel(item) }}</small></span>
           <span class="nearby-actions"><RouterLink v-if="item.slug" class="profile-link" :to="`/reparateurs/${item.slug}`" @click.stop>Voir le profil</RouterLink></span>
         </button>
         <p v-if="!filtered.length" class="empty-map">Aucun réparateur dans ces critères.</p>
@@ -275,14 +275,14 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.proximity-section { padding: 70px max(5%, 48px) 82px; background: linear-gradient(180deg, #f2f7fa 0%, #eef3f7 100%); }
-.proximity-heading { max-width: 1240px; margin: 0 auto 25px; display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.proximity-section { padding: 70px max(11%, 80px) 82px; background: linear-gradient(180deg, #f2f7fa 0%, #eef3f7 100%); }
+.proximity-heading { width: 100%; margin: 0 auto 25px; display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .proximity-eyebrow { color: #087f70; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-.proximity-heading h2 { margin: 8px 0 7px; color: #123f45; font-size: clamp(22px, 3vw, 32px); }
+.proximity-heading h2 { margin: 8px 0 7px; color: #123f45; font-size: clamp(17px, 1.8vw, 21px); }
 .proximity-heading p { margin: 0; color: #758195; font-size: 13px; }
 .locate-button { padding: 12px 16px; border: 1px solid #d6e5e1; border-radius: 10px; color: #087f70; background: #fff; font-size: 11px; box-shadow: 0 10px 22px rgba(8, 127, 112, 0.08); transition: all .2s ease; }
 .locate-button:hover { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(8, 127, 112, 0.12); }
-.proximity-layout { max-width: 1240px; min-height: 530px; margin: auto; display: grid; grid-template-columns: 195px minmax(400px, 1fr) 285px; overflow: hidden; border: 1px solid #e5ebf2; border-radius: 18px; background: #fff; box-shadow: 0 18px 45px rgba(21, 45, 62, 0.08); }
+.proximity-layout { width: 100%; min-height: 620px; margin: auto; display: grid; grid-template-columns: 185px minmax(0, 1fr) 225px; overflow: hidden; border: 1px solid #e5ebf2; border-radius: 18px; background: #fff; box-shadow: 0 18px 45px rgba(21, 45, 62, 0.08); }
 .proximity-filters { padding: 22px 18px; border-right: 1px solid #e8edf2; color: #536175; font-size: 11px; background: linear-gradient(180deg, #fdfefe 0%, #f6fafb 100%); }
 .proximity-filters h3 { margin: 0 0 18px; color: #152743; font-size: 14px; }
 .reset-filter { float: right; margin-top: -35px; padding: 0; background: none; color: #087f70; font-size: 9px; }
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
 .status-dot { width: 22px; height: 13px; border-radius: 20px; background: #159b78; position: relative; }
 .status-dot::after { content: ''; position: absolute; width: 9px; height: 9px; right: 2px; top: 2px; border-radius: 50%; background: #fff; }
 .filter-note { margin-top: 32px; color: #087f70; font-size: 10px; }
-.senegal-map { min-height: 530px; background: #d7edf2; z-index: 0; border-left: 1px solid #edf3f7; border-right: 1px solid #edf3f7; }
+.senegal-map { height: 500px; min-height: 0; margin-top: 46px; align-self: start; background: #d7edf2; z-index: 0; border-left: 1px solid #edf3f7; border-right: 1px solid #edf3f7; }
 .senegal-map :deep(.repairer-popup-link) { display: grid; gap: 3px; min-width: 150px; color: #152743; text-decoration: none; cursor: pointer; }
 .senegal-map :deep(.repairer-popup-link:hover .repairer-popup-name), .senegal-map :deep(.repairer-popup-action) { color: #087f70; }
 .senegal-map :deep(.repairer-popup-action) { margin-top: 5px; font-size: 11px; font-weight: 800; }
@@ -312,8 +312,8 @@ onBeforeUnmount(() => {
 :deep(.repairer-point) { filter: drop-shadow(0 1px 3px #087f7066); }
 @keyframes repairer-radius-pulse { 0% { opacity: .85; transform: scale(.7); } 70%, 100% { opacity: 0; transform: scale(1.9); } }
 :deep(.client-point) { filter: drop-shadow(0 1px 3px #d9363666); }
-.nearby-list { padding: 18px 12px; overflow: auto; background: linear-gradient(180deg, #f9fcfd 0%, #f4f8fb 100%); }
-.nearby-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; color: #152743; font-size: 12px; }
+.nearby-list { padding: 18px; overflow: auto; background: linear-gradient(180deg, #f9fcfd 0%, #f4f8fb 100%); }
+.nearby-list-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; color: #152743; font-size: 12px; line-height: 16px; }
 .nearby-list-header span { color: #758195; font-size: 9px; }
 .nearby-card { width: 100%; display: flex; align-items: center; gap: 8px; padding: 11px 10px; margin-bottom: 10px; border: 1px solid #edf1f5; border-radius: 12px; background: #fff; text-align: left; box-shadow: 0 6px 16px rgba(17, 40, 64, 0.04); transition: all .2s ease; }
 .nearby-card:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(17, 40, 64, 0.08); }
@@ -322,9 +322,13 @@ onBeforeUnmount(() => {
 .nearby-info { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
 .nearby-info strong { overflow: hidden; color: #152743; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .nearby-info small { color: #7e8a9b; font-size: 8px; }
+.nearby-info .nearby-distance { color: #ec9d16; font-size: 8px; }
 .rating { color: #ec9d16; font-size: 8px; }
 .rating em { color: #b4bdc8; font-style: normal; }
+.nearby-actions { flex: none; }
+.profile-link { display: inline-flex; align-items: center; justify-content: center; padding: 7px 10px; border: 1px solid #d6e5e1; border-radius: 7px; background: #f8fcfb; color: #087f70; font-size: 10px; font-weight: 700; white-space: nowrap; transition: background .2s ease, border-color .2s ease; }
+.profile-link:hover { background: #e7f5f1; border-color: #b9ded5; }
 .empty-map { color: #758195; font-size: 11px; line-height: 1.5; }
-@media (max-width: 980px) { .proximity-layout { grid-template-columns: 170px 1fr; } .nearby-list { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 12px; } .nearby-list-header { grid-column: 1 / -1; } }
-@media (max-width: 650px) { .proximity-section { padding: 45px 16px 55px; } .proximity-heading { display: block; } .locate-button { margin-top: 16px; } .proximity-layout { display: block; } .proximity-filters { border-right: 0; border-bottom: 1px solid #e8edf2; } .senegal-map { min-height: 380px; } .nearby-list { display: block; } }
+@media (max-width: 980px) { .proximity-layout { grid-template-columns: 170px 1fr; } .senegal-map { height: auto; min-height: 530px; margin-top: 0; } .nearby-list { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 12px; } .nearby-list-header { grid-column: 1 / -1; } }
+@media (max-width: 650px) { .proximity-section { padding: 45px 16px 55px; } .proximity-heading { display: block; } .locate-button { margin-top: 16px; } .proximity-layout { display: block; } .proximity-filters { border-right: 0; border-bottom: 1px solid #e8edf2; } .senegal-map { height: auto; min-height: 380px; } .nearby-list { display: block; } }
 </style>

@@ -108,6 +108,13 @@ class CandidatureReparateurTests(APITestCase):
         )
         self.assertEqual(validation.status_code, 200)
 
+        candidat = Utilisateur.objects.get(pk=candidat.pk)
+        self.client.force_authenticate(candidat)
+        compte_actualise = self.client.get(reverse("utilisateur-moi"))
+        self.assertEqual(compte_actualise.status_code, 200)
+        self.assertEqual(compte_actualise.data["profil_reparateur"]["statut_verification"], Reparateur.StatutVerification.VALIDEE)
+        self.assertEqual(compte_actualise.data["role"], Utilisateur.Role.CLIENT)
+
         self.client.force_authenticate(None)
         apres_validation = self.client.get(url)
         self.assertIn(profil.pk, [item["id"] for item in apres_validation.data.get("results", apres_validation.data)])

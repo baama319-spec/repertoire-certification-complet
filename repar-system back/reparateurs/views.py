@@ -55,7 +55,7 @@ class ReparateurViewSet(ModelViewSet):
             return queryset.filter(
                 statut_verification=Reparateur.StatutVerification.VALIDEE,
                 utilisateur__actif=True,
-            )
+            ).order_by("-date_verification", "-pk")
         if self.request.user.role == Utilisateur.Role.ADMINISTRATEUR:
             return queryset
         return queryset.filter(utilisateur=self.request.user)

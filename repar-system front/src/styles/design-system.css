@@ -1,0 +1,57 @@
+/* Design system shared by every space of ReparSystem.
+   Green is the only brand accent; neutral surfaces deliberately stay white or warm green. */
+:root {
+  --rs-primary: #087f70;
+  --rs-primary-dark: #06695e;
+  --rs-primary-strong: #045f55;
+  --rs-primary-soft: #e7f5f1;
+  --rs-primary-pale: #f4fbf8;
+  --rs-ink: #123f45;
+  --rs-text: #284750;
+  --rs-muted: #6d8588;
+  --rs-border: #d7e8e3;
+  --rs-surface: #ffffff;
+  --rs-page: #f5faf8;
+  --rs-dark: #0b302e;
+}
+
+html { background: var(--rs-page); }
+body { color: var(--rs-text); background: var(--rs-page); }
+
+/* Shared public shell */
+.header { border-bottom-color: var(--rs-border); }
+.header nav a.router-link-exact-active,
+.header nav a:hover { color: var(--rs-primary); }
+.signup, .searchbar button, .wide-search button,
+.contact-button, .booking button, .detail-hero > button,
+.request-box button, .pagination .active { background: var(--rs-primary); }
+.signup:hover, .searchbar button:hover, .wide-search button:hover,
+.contact-button:hover, .booking button:hover, .detail-hero > button:hover,
+.request-box button:hover { background: var(--rs-primary-dark); }
+
+.hero, .search-hero, .footer, .benefits { background-color: var(--rs-dark); }
+.hero-bg { background: linear-gradient(90deg, rgba(5, 56, 49, .82), rgba(5, 56, 49, .56) 48%, rgba(5, 56, 49, .14)); }
+.footer { color: #bdd1cb; }
+.footer h4, .footer-brand { color: #fff; }
+.footer a:hover { color: #8fe0cf; }
+
+/* Cards, result pages and profile screens */
+.categories, .results, .profile-page, .detail-page, .mobile-profile-page { background: var(--rs-page); }
+.category, .pro-card, .profile-box, .booking, .detail-main, .request-box, .detail-hero {
+  border-color: var(--rs-border);
+  box-shadow: 0 7px 20px rgba(18, 63, 69, .07);
+}
+.category b, .specialty, .tags span, .detail-tags span, .service-pills span {
+  background: var(--rs-primary-soft);
+  color: var(--rs-primary);
+}
+.profile-button, .card-content button { background: var(--rs-primary-strong); }
+.profile-button:hover, .card-content button:hover { background: var(--rs-primary); }
+.results-head h2, .profile-info h1, .detail-info h1, .profile-box h2, .detail-box h2 { color: var(--rs-ink); }
+.wide-search label, .wide-search input, .searchbar label { color: var(--rs-text); }
+
+/* A consistent focus indicator replaces browser-blue rings. */
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 3px solid rgba(8, 127, 112, .28);
+  outline-offset: 2px;
+}

@@ -102,15 +102,15 @@ onBeforeUnmount(() => {
 .universe {
   --ink: #123f45;
   --muted: #748197;
-  min-height: 920px;
+  min-height: 540px;
   overflow: hidden;
-  padding: 90px max(7%, 52px) 110px;
+  padding: 28px max(7%, 52px) 42px;
   background: #f5f6fb;
 }
 
 .universe-intro {
   max-width: 760px;
-  margin: 0 auto var(--home-title-content-gap, 64px);
+  margin: 0 auto 24px;
   text-align: center;
 }
 
@@ -145,7 +145,7 @@ onBeforeUnmount(() => {
 .photo-composition {
   position: relative;
   max-width: 1180px;
-  height: 590px;
+  height: 420px;
   margin: 0 auto;
 }
 
@@ -264,7 +264,7 @@ onBeforeUnmount(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px;
+  padding: 28px 24px;
   background: #0b5960;
   color: #fff;
   text-align: center;

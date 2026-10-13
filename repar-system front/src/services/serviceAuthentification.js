@@ -14,8 +14,16 @@ const utilisateur = ref(lireUtilisateurStocke())
 
 export const routeAccueilUtilisateur = (compte = utilisateur.value) => {
   if (compte?.role === 'ADMINISTRATEUR') return '/admin'
+  if (compte?.actif !== false && (compte?.profil_reparateur?.statut_verification === 'VALIDEE' || compte?.profil_reparateur?.profil_verifie === true)) return '/pro/demandes'
   if (compte?.role === 'REPARATEUR') return '/pro/demandes'
   return '/client/demandes'
+}
+
+export const actualiserUtilisateur = async () => {
+  if (!localStorage.getItem('reparsystem-token') && !sessionStorage.getItem('reparsystem-token')) return null
+  const compte = await api('/utilisateurs/moi/')
+  enregistrerUtilisateur(compte)
+  return compte
 }
 
 export const effacerSessionLocale = () => {

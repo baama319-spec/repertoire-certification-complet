@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import EntetePublic from '../../components/public/EntetePublic.vue'
 import PiedDePage from '../../components/public/PiedDePage.vue'
 import BarreRecherche from '../../components/public/BarreRecherche.vue'
@@ -9,10 +9,52 @@ import { chargerReparateursPublics } from '../../services/serviceReparateursPubl
 import imageBanniere2 from '../../assets/images/image copy 2.png'
 import imageBanniere3 from '../../assets/images/image copy 3.png'
 import imageBanniere4 from '../../assets/images/image.png'
-import fondServices from '../../assets/images/reparateur poly.jpg.jpg'
-import decorServices from '../../assets/images/unnamed.gif'
+import fondServices from '../../assets/images/image copy 6.png'
+import imageAtelierAuto from '../../assets/images/image copy 2.png'
+import imageAtelierPlomberie from '../../assets/images/image copy 3.png'
+import imageAtelierElectronique from '../../assets/images/image copy 5.png'
+import imageAtelierInformatique from '../../assets/images/clim repair 1.jpg'
 
 const videoAccueil = new URL('../../assets/images/Réparateur_répare_ordinateur_à_D…_20260929012113.mp4', import.meta.url).href
+const grilleReparateurs = ref(null)
+const pauseDefilement = ref(false)
+let defilementInterval = null
+
+const demarrerDefilement = async () => {
+	await nextTick()
+	if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+	const grille = grilleReparateurs.value
+	if (!grille) return
+	grille.scrollLeft = grille.scrollWidth - grille.clientWidth
+	defilementInterval = window.setInterval(() => {
+		const grille = grilleReparateurs.value
+		if (!grille || pauseDefilement.value || document.visibilityState !== 'visible') return
+		const carte = grille.firstElementChild
+		if (!carte) return
+		const styles = window.getComputedStyle(grille)
+		const pas = carte.getBoundingClientRect().width + (parseFloat(styles.columnGap) || 0)
+		const debut = grille.scrollLeft <= 2
+		grille.scrollTo({ left: debut ? grille.scrollWidth - grille.clientWidth : grille.scrollLeft - pas, behavior: 'smooth' })
+	}, 3200)
+}
+
+onMounted(() => {
+	intervalId = setInterval(() => {
+		slideActif.value = (slideActif.value + 1) % imagesBanniere.length
+	}, 3000)
+	chargerReparateursPublics().then((data) => {
+		reparateurs.value = data
+	}).catch(() => {
+	}).finally(() => {
+		chargementReparateurs.value = false
+		if (reparateurs.value.length) demarrerDefilement()
+	})
+})
+
+onBeforeUnmount(() => {
+	if (intervalId) clearInterval(intervalId)
+	if (defilementInterval) clearInterval(defilementInterval)
+})
 
 const categories = [
 	{ label: 'Électricité', icon: 'bolt' },
@@ -23,38 +65,117 @@ const categories = [
 	{ label: 'Téléphonie', icon: 'smartphone' }
 ]
 const imagesBanniere = [imageBanniere2, imageBanniere3, imageBanniere4]
+const imagesReparation = [
+	{ src: imageAtelierAuto, alt: 'Réparatrice intervenant sur un véhicule' },
+	{ src: fondServices, alt: 'Réparateur intervenant dans une cuisine' },
+	{ src: imageAtelierPlomberie, alt: 'Technicien réparant un équipement de plomberie' },
+	{ src: imageAtelierElectronique, alt: 'Technicien réparant un appareil électronique' },
+	{ src: imageAtelierInformatique, alt: 'Réparateur intervenant sur un ordinateur' },
+]
 const slideActif = ref(0)
 const reparateurs = ref([])
 const chargementReparateurs = ref(true)
 let intervalId = null
-
-onMounted(() => {
-	intervalId = setInterval(() => {
-		slideActif.value = (slideActif.value + 1) % imagesBanniere.length
-	}, 3000)
-	chargerReparateursPublics().then((data) => { reparateurs.value = data.slice(0, 5) }).catch(() => {}).finally(() => { chargementReparateurs.value = false })
-})
-
-onBeforeUnmount(() => {
-	if (intervalId) clearInterval(intervalId)
-})
 </script>
-<template><div class="home-page"><EntetePublic/></div><main><section class="hero"><video class="hero-video" :src="videoAccueil" autoplay muted loop playsinline preload="metadata" aria-label="Vidéo de réparation en arrière-plan"></video><div class="hero-video-overlay"><span class="hero-video-dot"></span> Réparation en direct</div><div class="hero-bg"></div><div class="hero-content"><h1>Trouvez le bon <em>réparateur</em><br>au bon prix près de<br>chez vous.</h1><p>Découvrez votre problème ou trouvez simplement un professionnel habile et vérifié près de chez vous en quelques clics.</p><BarreRecherche/></div></section><SectionUnivers/><section class="categories"><span class="eyebrow">NOS SERVICES</span><h2>Que souhaitez-vous réparer ?</h2><div class="category-grid"><div class="services-visual-card"><img :src="decorServices" alt="Effet visuel d’animation" /></div><div v-for="(cat, index) in categories" :key="cat.label" class="category" :style="{ '--delay': `${index * 0.22}s` }"><span class="category-icon"><AppIcon :name="cat.icon" :size="34"/></span><span class="category-label">{{cat.label}}</span></div></div></section><section class="featured-pros" aria-labelledby="featured-pros-title"><div class="featured-heading"><div><h2 id="featured-pros-title">À votre service.</h2></div></div><p v-if="chargementReparateurs" class="featured-state">Recherche des professionnels disponibles…</p><p v-else-if="!reparateurs.length" class="featured-state">Les profils vérifiés arrivent bientôt.</p><div v-else class="featured-grid"><CarteReparateur v-for="(reparateur, index) in reparateurs" :key="reparateur.id" :person="reparateur" :style="{ '--delay': `${index * 100}ms` }" /></div></section><RouterLink to="/reparateurs" class="featured-link featured-link-bottom">Voir tous les réparateurs <span>→</span></RouterLink></main><PiedDePage/></template>
+
+<template>
+  <div class="home-page"><EntetePublic /></div>
+  <main>
+    <section class="hero">
+      <video class="hero-video" :src="videoAccueil" autoplay muted loop playsinline preload="metadata" aria-label="Vidéo de réparation en arrière-plan"></video>
+      <div class="hero-video-overlay"><span class="hero-video-dot"></span> Réparation en direct</div>
+      <div class="hero-bg"></div>
+      <div class="hero-content">
+        <h1>Trouvez le bon <em>réparateur</em><br>au bon prix près de<br>chez vous.</h1>
+        <p>Découvrez votre problème ou trouvez simplement un professionnel habile et vérifié près de chez vous en quelques clics.</p>
+        <BarreRecherche />
+      </div>
+    </section>
+    <SectionUnivers />
+    <section class="how-it-works" aria-labelledby="how-it-works-title">
+			<h2 id="how-it-works-title" class="how-it-works-title">Comment ça <em>marche</em></h2>
+      <div class="how-it-works-inner">
+        <div class="how-it-works-visual" aria-label="Photos de différents métiers de réparation">
+          <img v-for="photo in imagesReparation.slice(0, 4)" :key="photo.src" :src="photo.src" :alt="photo.alt" loading="lazy" decoding="async" />
+        </div>
+        <div class="how-it-works-copy">
+          <ol class="steps-list">
+            <li class="step-item">
+              <span class="step-number">01</span>
+              <div class="step-content">
+                <h3>Décrivez votre problème</h3>
+                <p>Indiquez l’appareil et la panne. Ajoutez une photo si besoin.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-number">02</span>
+              <div class="step-content">
+                <h3>Analyse rapide</h3>
+                <p>Notre système donne une première idée du problème et de son urgence.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-number">03</span>
+              <div class="step-content">
+                <h3>Trouvez un réparateur</h3>
+                <p>Comparez les profils, spécialités, avis et proches de chez vous.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-number">04</span>
+              <div class="step-content">
+                <h3>Choisissez</h3>
+                <p>Consultez le profil et les réalisations avant de faire votre choix.</p>
+              </div>
+            </li>
+            <li class="step-item">
+              <span class="step-number">05</span>
+              <div class="step-content">
+                <h3>Suivez la réparation</h3>
+                <p>Suivez l’évolution jusqu’à la finalisation de l’intervention.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+		<section class="categories">
+			<span class="eyebrow">NOS SERVICES</span>
+			<h2>Que souhaitez-vous réparer ?</h2>
+			<div class="category-grid">
+				<div v-for="(cat, index) in categories" :key="cat.label" class="category" :style="{ '--delay': `${index * 0.22}s` }">
+					<span class="category-icon"><AppIcon :name="cat.icon" :size="34" /></span>
+					<span class="category-label">{{ cat.label }}</span>
+				</div>
+			</div>
+		</section>
+    <section class="featured-pros" aria-labelledby="featured-pros-title">
+      <div class="featured-heading"><div><h2 id="featured-pros-title">À votre <em>service</em></h2></div></div>
+      <p v-if="chargementReparateurs" class="featured-state">Recherche des professionnels disponibles…</p>
+      <p v-else-if="!reparateurs.length" class="featured-state">Les profils vérifiés arrivent bientôt.</p>
+	<div v-else ref="grilleReparateurs" class="featured-grid" @mouseenter="pauseDefilement = true" @mouseleave="pauseDefilement = false" @focusin="pauseDefilement = true" @focusout="pauseDefilement = false">
+        <CarteReparateur v-for="(reparateur, index) in reparateurs.slice(0, 6)" :key="reparateur.id" :person="reparateur" :style="{ '--delay': `${index * 100}ms` }" />
+      </div>
+    </section>
+  </main>
+  <PiedDePage />
+</template>
 
 <style scoped>
 main {
-	--home-title-content-gap: 80px;
+	--home-title-content-gap: 30px;
 	background: #f7fbfc;
 }
 
 main > section + section {
-	margin-top: 28px;
+	margin-top: 48px;
 }
 
-.home-page :deep(.header){background:#0b1427;color:#fff;border-bottom-color:rgba(255,255,255,.12)}
+.home-page :deep(.header){background:#111827;color:#fff;border-bottom-color:rgba(255,255,255,.16)}
 .home-page :deep(.header a){color:#fff}
 .home-page :deep(.header .logo-reparsystem){background:#fff;border-radius:8px;padding:3px}
 .home-page :deep(.header .signup){background:#087f70;color:#fff}
+.home-page + main + :deep(.footer){background-color:#111827}
 .hero {
 	position: relative;
 	overflow: hidden;
@@ -62,7 +183,7 @@ main > section + section {
 	align-items: center;
 	justify-content: space-between;
 	gap: 18px;
-	background: #0b1427;
+	background: #111827;
 	min-height: 730px;
 	padding: 34px 0 42px;
 }
@@ -75,12 +196,13 @@ main > section + section {
 	object-fit: cover;
 	display: block;
 	filter: saturate(1.1) contrast(1.08);
+	background: #111827;
 }
 
 .hero-bg {
 	position: absolute;
 	inset: 0;
-	background: linear-gradient(90deg, rgba(6,29,47,.78) 0%, rgba(6,29,47,.58) 30%, rgba(6,29,47,.18) 60%, rgba(6,29,47,.06) 100%);
+	background: linear-gradient(90deg, rgba(17,24,39,.58) 0%, rgba(17,24,39,.38) 30%, rgba(17,24,39,.12) 60%, transparent 100%);
 	z-index: 1;
 	isolation: isolate;
 }
@@ -184,7 +306,7 @@ main > section + section {
 .categories {
 	position: relative;
 	background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.72)), url('../../assets/images/reparateur poly.jpg.jpg') center/cover no-repeat;
-	padding: 82px max(7%, 52px) 132px;
+	padding: 110px max(7%, 52px) 160px;
 	isolation: isolate;
 }
 
@@ -231,20 +353,22 @@ main > section + section {
 }
 
 .categories h2 {
-	margin: 16px 0 var(--home-title-content-gap);
-	font-size: clamp(30px, 4vw, 48px);
-	line-height: 1.12;
+	margin: 18px 0 42px;
+	font-size: clamp(30px, 4vw, 52px);
+	line-height: 1.08;
 	letter-spacing: 0;
 	color: #fff;
 }
 
 .category-grid {
 	display: grid;
-	grid-template-columns: repeat(7, minmax(0, 1fr));
-	gap: 22px;
+	grid-template-columns: repeat(6, minmax(180px, 1fr));
+	gap: 26px;
 	max-width: 1320px;
 	margin: 0 auto;
 	align-items: stretch;
+	justify-content: center;
+	justify-items: center;
 }
 
 .services-visual-card {
@@ -269,8 +393,10 @@ main > section + section {
 	align-items: center;
 	justify-content: center;
 	gap: 18px;
-	min-height: 200px;
-	padding: 26px 18px 22px;
+	width: 100%;
+	max-width: 220px;
+	min-height: 220px;
+	padding: 28px 20px 24px;
 	border: 1px solid rgba(255, 255, 255, 0.16);
 	border-radius: 16px;
 	background: rgba(255, 255, 255, 0.08);
@@ -305,12 +431,14 @@ main > section + section {
 	height: 74px;
 	border-radius: 18px;
 	background: rgba(138, 246, 224, 0.12);
-	color: #76f5e4;
+	color: #fff;
 }
 
 .category-icon svg {
 	width: 34px;
 	height: 34px;
+	stroke: #fff;
+	fill: none;
 }
 
 .category-label {
@@ -321,8 +449,12 @@ main > section + section {
 }
 
 .featured-pros {
-	padding: 72px max(2.5%, 30px) 36px;
+	padding: 48px max(2.5%, 30px) 140px;
 	background: #f7fbfc;
+}
+
+main > .featured-pros {
+	margin-top: 28px;
 }
 
 .featured-heading {
@@ -331,110 +463,293 @@ main > section + section {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	justify-content: space-between;
 	gap: 30px;
-	margin: 0 auto var(--home-title-content-gap);
+	margin: 0 auto 72px;
 }
 
 .featured-heading > div { width: 100%; text-align: center; }
 
 .featured-heading h2 {
-	max-width: 570px;
+	max-width: 700px;
 	margin: 0 auto;
 	color: #102a52;
-	font-size: clamp(30px, 4vw, 48px);
+	font-size: clamp(30px, 3vw, 44px);
 	line-height: 1.05;
 	letter-spacing: -.8px;
 }
 
-.featured-heading p {
-	margin: 0;
-	color: #75849a;
+.featured-heading h2 em {
+	color: #0a7d73;
+	font-style: normal;
+}
+
+.featured-state {
+	max-width: 1180px;
+	margin: 0 auto 28px;
+	text-align: center;
+	color: #5d6f7a;
 	font-size: 13px;
 }
 
-.featured-link {
-	flex: none;
-	position: static;
-	display: inline-block;
-	margin-top: 22px;
-	padding: 12px 15px;
-	border: 1px solid #c9e2df;
-	border-radius: 8px;
-	color: #087f70;
-	background: #fff;
-	font-size: 11px;
-	font-weight: 800;
-	transition: transform .2s ease, box-shadow .2s ease;
+.featured-grid {
+	max-width: 1280px;
+	display: flex;
+	justify-content: flex-start;
+	align-items: stretch;
+	gap: 22px;
+	margin: 0 auto;
+	padding: 2px 0 8px;
+	overflow-x: auto;
+	overflow-y: hidden;
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+	overscroll-behavior-x: contain;
 }
 
-.featured-link:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(8,127,112,.12); }
-.featured-link span { margin-left: 8px; font-size: 16px; }
-.featured-link.featured-link-bottom { display: flex; width: max-content; position: static; margin: 24px auto 16px; }
-.featured-grid { max-width: 1640px; display: flex !important; flex-wrap: nowrap; gap: 28px; margin: 0 auto; overflow-x: auto; padding: 4px 2px 16px; scroll-snap-type: x mandatory; scrollbar-width: none; }
-.featured-grid::-webkit-scrollbar { display: none; }
-.featured-grid :deep(.pro-card) { flex: 0 0 max(230px, calc((100% - 112px) / 5)); min-width: 0; scroll-snap-align: start; border: 1px solid rgba(255, 255, 255, .88); background: rgba(255, 255, 255, .74); backdrop-filter: blur(18px) saturate(155%); box-shadow: 0 10px 28px rgba(20, 47, 82, .10), inset 0 1px 0 rgba(255, 255, 255, .95); transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
-.featured-grid :deep(.pro-card:hover) { transform: translateY(-6px); border-color: rgba(255, 255, 255, .98); box-shadow: 0 18px 38px rgba(20, 47, 82, .16), 0 0 0 1px rgba(255, 255, 255, .45), inset 0 1px 0 #fff; }
-.featured-grid :deep(.photo) { height: 171px; }
-.featured-grid :deep(.card-content) { padding: 14px 18px 17px; }
-.featured-grid :deep(.name-score h3) { font-size: 15px; }
+.featured-grid::-webkit-scrollbar {
+	display: none;
+}
+
+.featured-grid :deep(.pro-card) {
+	position: relative;
+	isolation: isolate;
+	width: 220px;
+	flex: 0 0 220px;
+	scroll-snap-align: start;
+	min-width: 0;
+	padding: 0;
+	border: 1px solid #d2e2e4;
+	border-radius: 12px;
+	background: #fff;
+	box-shadow: none;
+	transition: translate .28s ease, border-color .28s ease;
+	box-sizing: border-box;
+}
+
+.featured-grid :deep(.pro-card::before) {
+	content: '';
+	position: absolute;
+	z-index: 2;
+	inset: 0;
+	border-radius: inherit;
+	background: linear-gradient(110deg, transparent 20%, rgba(255, 255, 255, .42) 48%, transparent 72%);
+	transform: translateX(-120%);
+	pointer-events: none;
+}
+
+.featured-grid :deep(.pro-card:hover) {
+	translate: 0 -5px;
+	border-color: #b9d9d3;
+	box-shadow: none;
+}
+
+.featured-grid :deep(.pro-card:hover::before) {
+	animation: featured-card-shine .75s ease forwards;
+}
+
+.featured-grid :deep(.photo) {
+	height: 118px;
+	border-radius: 10px 10px 0 0;
+	background-size: cover;
+	transition: filter .3s ease;
+}
+
+.featured-grid :deep(.pro-card:hover .photo) {
+	filter: saturate(1.06);
+}
+
+.featured-grid :deep(.badge) { font-size: 9px; }
+.featured-grid :deep(.card-content) { padding: 10px 10px 8px; }
+.featured-grid :deep(.name-score h3) { font-size: 14px; margin: 0; }
 .featured-grid :deep(.name-score strong) { font-size: 11px; }
-.featured-grid :deep(.company), .featured-grid :deep(.location) { font-size: 10px; }
-.featured-grid :deep(.tags) { gap: 6px; margin-top: 16px; }
-.featured-grid :deep(.tags span) { padding: 5px 7px; font-size: 7px; }
-.featured-grid :deep(.profile-button) { height: 39px; margin-top: 16px; }
-.featured-grid :deep(.pro-card) { opacity: 0; animation: featured-card-in .55s cubic-bezier(.2,.75,.25,1) var(--delay) forwards; }
-.featured-state { max-width: 1180px; margin: 0 auto; padding: 28px; border: 1px dashed #cfe1e5; border-radius: 12px; color: #73879a; background: #fff; text-align: center; font-size: 12px; }
-@keyframes featured-card-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.featured-grid :deep(.rating svg) { color: #f2ae16; width: 12px; height: 12px; }
+.featured-grid :deep(.company) { display: none; }
+.featured-grid :deep(.location) { margin-top: 7px; font-size: 10px; }
+.featured-grid :deep(.location svg) { color: var(--rs-primary, #087f70); stroke-width: 2.5; width: 12px; height: 12px; }
+.featured-grid :deep(.tags) { gap: 5px; margin-top: 8px; }
+.featured-grid :deep(.tags span) { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #d9e3e5; border-radius: 999px; background: #fff; color: var(--rs-ink, #123f45); padding: 4px 7px; font-size: 8px; }
+.featured-grid :deep(.tags span svg) { color: var(--rs-primary, #087f70); stroke-width: 2.3; width: 10px; height: 10px; }
+.featured-grid :deep(.profile-button) { border-color: #d8e0e3; background: #fff; color: #34454b; font-size: 10px; padding: 7px 8px; }
+.featured-grid :deep(.profile-button:hover) { border-color: #c7d0d3; background: #f3f5f5; color: #25363c; }
+
+.how-it-works {
+	padding: 18px 0 72px;
+	background: #f7fbfc;
+}
+
+.how-it-works-title {
+	max-width: 1180px;
+	margin: 0 auto 48px;
+	color: #123f45;
+	font-size: clamp(30px, 3vw, 48px);
+	font-weight: 800;
+	line-height: 1.12;
+	letter-spacing: -.8px;
+	text-align: center;
+}
+
+.how-it-works-title em {
+	color: #087f70;
+	font-style: normal;
+}
+
+.how-it-works-inner {
+	display: grid;
+	grid-template-columns: minmax(0, 1.06fr) minmax(0, .94fr);
+	align-items: center;
+	gap: -2px;
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 0;
+}
+
+.how-it-works-visual {
+	position: relative;
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	grid-template-rows: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+	overflow: hidden;
+	width: 100%;
+	height: 520px;
+	margin: 0;
+	padding: 4px;
+}
+
+.how-it-works-visual img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 18px;
+	box-shadow: 0 18px 30px rgba(17, 24, 39, 0.10);
+	transform-origin: center center;
+	animation: image-float 8s ease-in-out infinite alternate;
+	transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.how-it-works-visual img:hover {
+	transform: translateY(-4px) scale(1.02);
+	box-shadow: 0 22px 36px rgba(17, 24, 39, 0.14);
+}
+
+.how-it-works-visual img:nth-child(1) { grid-column: 1; grid-row: 1; animation-delay: 0s; }
+.how-it-works-visual img:nth-child(2) { grid-column: 1; grid-row: 2; animation-delay: .5s; }
+.how-it-works-visual img:nth-child(3) { grid-column: 2; grid-row: 1 / span 2; animation-delay: 1s; }
+.how-it-works-visual img:nth-child(4) { grid-column: 3; grid-row: 1; animation-delay: 1.5s; }
+.how-it-works-visual img:nth-child(5) {
+  grid-column: 4;
+  grid-row: 1 / span 2;
+  animation-delay: 2s;
+  object-fit: cover;
+  object-position: center;
+}
+
+@keyframes image-float {
+	0% {
+		transform: translateY(0px) scale(1);
+	}
+	50% {
+		transform: translateY(-6px) scale(1.02);
+	}
+	100% {
+		transform: translateY(0px) scale(1);
+	}
+}
+
+.how-it-works-copy {
+	padding: 0;
+}
+
+.steps-list {
+	list-style: none;
+	display: grid;
+	gap: 12px;
+	padding: 0;
+	margin: 0;
+}
+
+.step-item {
+	display: grid;
+	grid-template-columns: 52px minmax(0, 1fr);
+	gap: 12px;
+	align-items: center;
+	padding: 14px 14px 13px;
+	border: 1px solid rgba(16, 42, 82, 0.08);
+	border-radius: 16px;
+	background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(239,249,247,0.92));
+	box-shadow: 0 10px 22px rgba(17, 24, 39, 0.04);
+	opacity: 0;
+	transform: translateY(14px);
+	animation: step-entry .55s ease forwards;
+}
+
+.step-item:nth-child(1) { animation-delay: .08s; }
+.step-item:nth-child(2) { animation-delay: .16s; }
+.step-item:nth-child(3) { animation-delay: .24s; }
+.step-item:nth-child(4) { animation-delay: .32s; }
+.step-item:nth-child(5) { animation-delay: .40s; }
+
+@keyframes step-entry {
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.step-number {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 52px;
+	height: 52px;
+	border-radius: 14px;
+	background: linear-gradient(135deg, #0a7f73, #5cd7c5);
+	color: #fff;
+	font-size: 12px;
+	font-weight: 800;
+	letter-spacing: 0.08em;
+	box-shadow: 0 8px 18px rgba(8, 127, 112, 0.2);
+}
+
+.step-content {
+	min-width: 0;
+}
+
+.step-content h3 {
+	margin: 0 0 4px;
+	color: #123f45;
+	font-size: 1rem;
+	font-weight: 800;
+	letter-spacing: -0.02em;
+}
+
+.step-content p {
+	max-width: 620px;
+	margin: 0;
+	color: rgba(18, 18, 18, 0.72);
+	font-size: 0.88rem;
+	line-height: 1.5;
+}
 
 @media (max-width: 900px) {
-	main { --home-title-content-gap: 64px; }
-	main > section + section { margin-top: 18px; }
-	.featured-grid { gap: 24px; }
-	.featured-grid :deep(.pro-card) { flex-basis: 230px; }
-
-	.hero {
-		display: block;
-		min-height: 560px;
+	.how-it-works-title { margin-bottom: 28px; }
+	.how-it-works-inner {
+		grid-template-columns: 1fr;
+		gap: 28px;
 	}
 
-	.hero-content {
-		padding: 0 24px;
-		max-width: 100%;
-		margin-left: 0;
+	.how-it-works-visual {
+		width: min(100%, 720px);
+		height: 460px;
+		min-height: 0;
+		margin: 0 auto;
 	}
-
-	.hero-gallery {
-		inset: 0 -20%;
-		opacity: .4;
-		filter: saturate(1.2) contrast(1.04);
-	}
-
-	.hero-side-image-carousel {
-		display: block;
-		width: min(82vw, 480px);
-		height: 380px;
-		margin: 22px auto 0;
-		border-radius: 18px;
-	}
-
-	.featured-heading { display: block; text-align: center; }
-	.featured-link { position: static; }
 }
 
 @media (max-width: 600px) {
-	main { --home-title-content-gap: 52px; }
-	.categories h2 {
-		font-size: 34px;
-	}
-	.featured-pros { padding: 56px 20px 36px; }
-	.featured-grid { gap: 16px; }
-	.featured-grid :deep(.pro-card) { flex-basis: min(76vw, 280px); }
-	.featured-grid :deep(.photo) { height: 155px; }
+	.how-it-works-visual { height: 360px; gap: 6px; }
 }
 
-.featured-link.featured-link-bottom { display: flex; width: max-content; margin: 24px auto 16px; }
-
 </style>
-
 

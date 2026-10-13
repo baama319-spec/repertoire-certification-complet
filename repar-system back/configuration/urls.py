@@ -3,7 +3,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
+from .views import DashboardView
+
 urlpatterns = [
+    path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("admin/", admin.site.urls),
     path("api/utilisateurs/", include("utilisateurs.urls")),
     path("api/reparateurs/", include("reparateurs.urls")),

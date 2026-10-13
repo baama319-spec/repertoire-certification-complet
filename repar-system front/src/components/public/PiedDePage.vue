@@ -32,6 +32,68 @@ import LogoReparSystem from '../commun/LogoReparSystem.vue'
 </template>
 
 <style scoped>
-.footer-contact { display: flex; align-items: center; gap: 8px; }
-.footer-contact svg { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.footer {
+  background: #081329;
+  color: #7e899c;
+  padding: 62px max(5.5%, 48px) 26px;
+  font-size: 11px;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+  gap: 34px;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
+.footer h4 {
+  margin: 0 0 14px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+.footer a {
+  display: block;
+  color: #c5ced8;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+.footer a:hover {
+  color: #fff;
+}
+.footer-contact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.footer-contact svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.copyright {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  color: #cfe3e0;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+@media(max-width:800px){
+  .footer-grid{grid-template-columns:1fr 1fr;gap:35px}
+  .copyright{flex-direction:column;gap:14px}
+}
 </style>

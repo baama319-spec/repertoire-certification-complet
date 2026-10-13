@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 from unittest.mock import patch
@@ -7,7 +8,22 @@ from clients.models import Client
 from localisations.models import Localisation
 from notifications.models import Notification
 from reparateurs.models import Reparateur
-from .models import DemandeMiseEnRelation
+from .models import DemandeMiseEnRelation, PieceJointe
+
+
+class DashboardViewTests(APITestCase):
+	def test_dashboard_admin_affiche_la_vue_densemble(self):
+		admin = get_user_model().objects.create_superuser(
+			email="admin@example.com",
+			password="password123",
+			nom="Admin",
+			prenom="Super",
+		)
+		self.client.force_login(admin)
+		response = self.client.get("/dashboard/")
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, "Vue d'ensemble")
+		self.assertContains(response, "Clients inscrits")
 
 
 class CreationDemandeTests(APITestCase):
@@ -60,6 +76,53 @@ class CreationDemandeTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 		self.assertFalse(DemandeMiseEnRelation.objects.exists())
+
+	def test_client_peut_envoyer_jusqua_trois_photos_avec_une_demande(self):
+		fichiers = [
+			SimpleUploadedFile("photo1.jpg", b"aaaa", content_type="image/jpeg"),
+			SimpleUploadedFile("photo2.jpg", b"bbbb", content_type="image/jpeg"),
+			SimpleUploadedFile("photo3.jpg", b"cccc", content_type="image/jpeg"),
+		]
+		response = self.client.post(
+			"/api/demandes/",
+			{
+				"appareil": "Smartphone",
+				"description_probleme": "Mon téléphone ne charge plus depuis hier et il chauffe.",
+				"localisation": self.localisation.pk,
+				"mode_intervention": "DOMICILE",
+				"adresse_intervention": "Dakar Plateau, rue 10",
+				"photos": fichiers,
+			},
+			format="multipart",
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+		self.assertEqual(PieceJointe.objects.filter(demande_id=response.data["id"]).count(), 3)
+		self.assertEqual(len(response.data["pieces_jointes"]), 3)
+		self.assertIn("/media/demandes/", response.data["pieces_jointes"][0]["fichier"])
+
+	def test_demande_refuse_au_dela_de_trois_photos(self):
+		fichiers = [
+			SimpleUploadedFile("photo1.jpg", b"aaaa", content_type="image/jpeg"),
+			SimpleUploadedFile("photo2.jpg", b"bbbb", content_type="image/jpeg"),
+			SimpleUploadedFile("photo3.jpg", b"cccc", content_type="image/jpeg"),
+			SimpleUploadedFile("photo4.jpg", b"dddd", content_type="image/jpeg"),
+		]
+		response = self.client.post(
+			"/api/demandes/",
+			{
+				"appareil": "Smartphone",
+				"description_probleme": "Mon téléphone ne charge plus depuis hier et il chauffe.",
+				"localisation": self.localisation.pk,
+				"mode_intervention": "DOMICILE",
+				"adresse_intervention": "Dakar Plateau, rue 10",
+				"photos": fichiers,
+			},
+			format="multipart",
+		)
+
+		self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+		self.assertEqual(PieceJointe.objects.count(), 0)
 
 	def test_un_compte_client_avec_profil_reparateur_peut_lister_ses_demandes_entrantes(self):
 		user_model = get_user_model()

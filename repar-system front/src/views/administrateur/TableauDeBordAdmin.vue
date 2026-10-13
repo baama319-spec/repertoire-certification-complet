@@ -25,7 +25,7 @@ import { chargerStatistiquesAdministration } from '../../services/serviceDemande
 const statistiques = ref({ clients_inscrits: 0, reparateurs_actifs: 0, demandes_totales: 0, zones_couvertes: 0, demandes_acceptees: 0, taux_acceptation: 0, repartition_demandes: [] })
 const chargement = ref(true)
 const erreur = ref('')
-const couleurs = ['#1976ef', '#ff8243', '#34b879', '#7548e8', '#e6aa00', '#0c9ca8']
+const couleurs = ['#1477f8', '#8fe2b1', '#43b980', '#5799f2', '#086d68', '#91d9c3']
 const formatter = valeur => new Intl.NumberFormat('fr-FR').format(Number(valeur) || 0)
 const formatPercent = valeur => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(valeur) || 0)}%`
 const kpis = computed(() => [
@@ -64,4 +64,88 @@ onMounted(async () => {
 .kpis article{min-height:112px}.kpis h2{margin:0;color:#5576ad}.kpis strong{margin-top:24px}
 .panels > .panel{min-height:390px}
 .feedback{margin:0;padding:12px 14px;border-radius:8px;background:#eef8f5;color:#087f70}.feedback.error{background:#fff0f2;color:#c22f45}.empty{padding:52px 20px;text-align:center;color:#6682b2}
+
+/* Graphique des spécialités : présentation compacte inspirée du visuel de référence. */
+.panels > .distribution {
+  align-self: start;
+  min-height: 180px;
+  padding: 12px 14px;
+  border-radius: 9px;
+}
+
+.panel.distribution h2 {
+  color: #173f4d;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.distribution-content {
+  min-height: 130px;
+  gap: 22px;
+  padding: 10px 8px 0;
+}
+
+.distribution .donut {
+  width: 96px;
+  height: 96px;
+}
+
+.distribution .donut b {
+  width: 58px;
+  height: 58px;
+  color: #153d4c;
+  font-size: 15px;
+}
+
+.distribution .donut small,
+.distribution .legend small {
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.distribution .legend p {
+  min-height: 40px;
+  gap: 10px;
+  padding: 6px 0;
+  color: #294e5c;
+  font-size: 11px;
+}
+
+.distribution .legend i {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+}
+
+.distribution .legend span {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.distribution .legend b {
+  min-width: 68px;
+  font-size: 12px;
+}
+
+.distribution .legend small {
+  color: #6b85a5;
+  font-weight: 400;
+}
+
+@media (max-width: 600px) {
+  .panels > .distribution {
+    min-height: auto;
+  }
+
+  .distribution-content {
+    gap: 14px;
+    padding: 12px 2px 0;
+  }
+
+  .distribution .donut {
+    width: 88px;
+    height: 88px;
+  }
+}
 </style>

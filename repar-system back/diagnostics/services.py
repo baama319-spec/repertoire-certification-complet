@@ -10,13 +10,13 @@ class DiagnosticIAError(Exception):
 
 
 class DiagnosticIAService:
-    endpoint = "https://router.huggingface.co/v1/chat/completions"
-    default_model = "meta-llama/Llama-3.1-8B-Instruct"
+    endpoint = "https://openrouter.ai/api/v1/chat/completions"
+    default_model = "google/gemini-2.5-flash"
 
     def __init__(self, http_client=requests):
         self.http_client = http_client
-        self.token = os.getenv("HUGGINGFACE_API_TOKEN", "")
-        self.model = os.getenv("HUGGINGFACE_DIAGNOSTIC_MODEL", self.default_model)
+        self.token = os.getenv("OPENROUTER_API_KEY", "")
+        self.model = os.getenv("OPENROUTER_DIAGNOSTIC_MODEL", self.default_model)
 
     def analyser(self, donnees):
         if not self.token:
@@ -28,9 +28,12 @@ class DiagnosticIAService:
                 headers={
                     "Authorization": f"Bearer {self.token}",
                     "Content-Type": "application/json",
+                    "HTTP-Referer": os.getenv("OPENROUTER_SITE_URL", "http://localhost:5173"),
+                    "X-Title": "ReparSystem",
                 },
                 json={
                     "model": self.model,
+                    "provider": {"sort": "latency"},
                     "messages": [
                         {"role": "system", "content": self._prompt_system()},
                         {"role": "user", "content": self._prompt_utilisateur(donnees)},
@@ -43,7 +46,19 @@ class DiagnosticIAService:
         except requests.RequestException as error:
             raise DiagnosticIAError("Le fournisseur IA est temporairement indisponible.") from error
         if response.status_code >= 400:
-            raise DiagnosticIAError("Le fournisseur IA a refusé la demande.")
+            messages = {
+                400: "OpenRouter a refusé la requête. Vérifiez le modèle configuré.",
+                401: "La clé OpenRouter est invalide ou expirée. Vérifiez OPENROUTER_API_KEY et redémarrez le backend.",
+                403: "OpenRouter refuse l’accès au modèle ou au fournisseur sélectionné. Vérifiez les autorisations de la clé.",
+                404: "Le modèle configuré est introuvable sur OpenRouter. Vérifiez OPENROUTER_DIAGNOSTIC_MODEL.",
+                402: "OpenRouter indique que le compte n’a pas assez de crédits. Ajoutez des crédits dans le compte OpenRouter.",
+                429: "La limite de requêtes OpenRouter est atteinte. Vérifiez le quota ou réessayez plus tard.",
+            }
+            message = messages.get(
+                response.status_code,
+                f"OpenRouter est indisponible (erreur HTTP {response.status_code}). Réessayez plus tard.",
+            )
+            raise DiagnosticIAError(message)
 
         try:
             contenu = response.json()["choices"][0]["message"]["content"]

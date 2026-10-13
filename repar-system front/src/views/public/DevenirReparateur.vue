@@ -126,7 +126,7 @@ function activerLocalisation () {
   </div>
   <main class="devenir" :style="{ '--devenir-bg': `url(${imageFond})` }">
     <section v-if="!connecte" class="intro">
-      <div class="etapes" aria-label="Les étapes pour devenir réparateur"><h1>Partagez votre expertise avec ReparSystem</h1><article><div class="etape-top"><b>01</b></div><h2>Créez votre compte</h2><p>Utilisez un seul compte pour tous vos espaces.</p></article><span class="etape-arrow" aria-hidden="true">›</span><article><div class="etape-top"><b>02</b></div><h2>Complétez votre profil</h2><p>Ajoutez vos compétences et zones d’intervention.</p></article><span class="etape-arrow" aria-hidden="true">›</span><article><div class="etape-top"><b>03</b></div><h2>Faites vérifier votre profil</h2><p>Nous vérifions votre candidature avant validation.</p></article></div>
+      <div class="etapes" aria-label="Les étapes pour devenir réparateur"><article><div class="etape-top"><b>01</b></div><h2>Créez votre compte</h2><p>Utilisez un seul compte pour tous vos espaces.</p></article><span class="etape-arrow" aria-hidden="true">›</span><article><div class="etape-top"><b>02</b></div><h2>Complétez votre profil</h2><p>Ajoutez vos compétences et zones d’intervention.</p></article><span class="etape-arrow" aria-hidden="true">›</span><article><div class="etape-top"><b>03</b></div><h2>Faites vérifier votre profil</h2><p>Nous vérifions votre candidature avant validation.</p></article></div>
       <div class="actions"><RouterLink class="secondary" :to="{ path: '/connexion', query: { redirection: '/devenir-reparateur' } }">Se connecter</RouterLink><RouterLink class="primary" :to="{ path: '/inscription', query: { redirection: '/devenir-reparateur' } }">Créer mon compte</RouterLink></div>
     </section>
 
@@ -214,7 +214,7 @@ function activerLocalisation () {
 
 .etapes {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 18px;
   margin: 42px 0;
@@ -237,7 +237,7 @@ function activerLocalisation () {
 }
 
 .etapes article {
-  min-height: 180px;
+  min-height: 220px;
   padding: 22px 20px;
 }
 

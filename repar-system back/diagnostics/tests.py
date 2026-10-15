@@ -75,14 +75,18 @@ class DiagnosticApiTests(APITestCase):
         self.assertIn("description", response.data)
 
     @patch.dict("os.environ", {"GEMINI_API_KEY": "test-token"})
-    @patch("diagnostics.services.requests.post")
-    def test_audio_transcription_returns_multilingual_text(self, post):
+    @patch("diagnostics.services.genai.Client")
+    def test_audio_transcription_returns_multilingual_text(self, client_factory):
         self.client.force_authenticate(self.user)
-        response_from_model = Mock(status_code=200)
-        response_from_model.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "Téléphone bi daanu, écran bi dafa tas."}]}}]
-        }
-        post.return_value = response_from_model
+        gemini = Mock()
+        fichier_gemini = Mock(
+            uri="https://generativelanguage.googleapis.com/v1beta/files/temporary-audio",
+            mime_type="audio/webm",
+        )
+        fichier_gemini.name = "files/temporary-audio"
+        gemini.files.upload.return_value = fichier_gemini
+        gemini.interactions.create.return_value.output_text = "Téléphone bi daanu, écran bi dafa tas."
+        client_factory.return_value = gemini
 
         response = self.client.post(
             "/api/ia/transcription/",
@@ -92,14 +96,19 @@ class DiagnosticApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["text"], "Téléphone bi daanu, écran bi dafa tas.")
+        client_factory.assert_called_once()
+        self.assertEqual(client_factory.call_args.kwargs["api_key"], "test-token")
+        self.assertEqual(gemini.interactions.create.call_args.kwargs["model"], "gemini-3.5-transcribe")
         self.assertEqual(
-            post.call_args.args[0],
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+            gemini.interactions.create.call_args.kwargs["input"][0]["mime_type"],
+            "audio/webm",
         )
-        self.assertEqual(post.call_args.kwargs["headers"]["x-goog-api-key"], "test-token")
-        parts = post.call_args.kwargs["json"]["contents"][0]["parts"]
-        self.assertIn("wolof", parts[0]["text"])
-        self.assertIn("inlineData", parts[1])
+        self.assertEqual(
+            gemini.interactions.create.call_args.kwargs["generation_config"]["transcription_config"]["language_codes"],
+            [],
+        )
+        self.assertFalse(gemini.interactions.create.call_args.kwargs["store"])
+        gemini.files.delete.assert_called_once_with(name="files/temporary-audio")
 
     def test_audio_transcription_rejects_unsupported_file_type(self):
         self.client.force_authenticate(self.user)
@@ -172,10 +181,20 @@ class DiagnosticApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
 
     @patch.dict("os.environ", {"GEMINI_API_KEY": "test-token"})
-    @patch("diagnostics.services.requests.post")
-    def test_audio_transcription_explains_gemini_quota_limit(self, post):
+    @patch("diagnostics.services.genai.Client")
+    def test_audio_transcription_explains_gemini_quota_limit(self, client_factory):
         self.client.force_authenticate(self.user)
-        post.return_value = Mock(status_code=429)
+        gemini = Mock()
+        fichier_gemini = Mock(
+            uri="https://generativelanguage.googleapis.com/v1beta/files/temporary-audio",
+            mime_type="audio/webm",
+        )
+        fichier_gemini.name = "files/temporary-audio"
+        gemini.files.upload.return_value = fichier_gemini
+        erreur_quota = RuntimeError("rate limit")
+        erreur_quota.code = 429
+        gemini.interactions.create.side_effect = erreur_quota
+        client_factory.return_value = gemini
 
         response = self.client.post(
             "/api/ia/transcription/",
@@ -185,3 +204,4 @@ class DiagnosticApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
         self.assertIn("quota", response.data["detail"])
+        gemini.files.delete.assert_called_once_with(name="files/temporary-audio")

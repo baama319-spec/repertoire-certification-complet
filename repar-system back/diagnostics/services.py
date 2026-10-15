@@ -1,10 +1,12 @@
-import base64
 import json
 import logging
 import os
 import re
+import tempfile
 
 import requests
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
@@ -85,8 +87,7 @@ class TraductionDiagnosticService:
 
 
 class TranscriptionAudioService:
-    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    default_model = "gemini-3.8-flash"
+    default_model = "gemini-3.5-transcribe"
 
     def __init__(self, http_client=requests):
         self.http_client = http_client
@@ -97,57 +98,56 @@ class TranscriptionAudioService:
         if not self.token:
             raise TranscriptionIAError("La transcription vocale n'est pas configurée.")
 
+        client = genai.Client(
+            api_key=self.token,
+            http_options=types.HttpOptions(timeout=180_000),
+        )
+        fichier_gemini = None
         try:
-            response = self.http_client.post(
-                self.endpoint.format(model=self.model),
-                headers={"x-goog-api-key": self.token},
-                json={
-                    "contents": [{
-                        "parts": [
-                            {
-                                "text": (
-                                    "Transcris fidèlement et intégralement les paroles de cet audio. "
-                                    "La personne peut parler français, wolof ou mélanger les deux. "
-                                    "Garde autant que possible les mots dans leur langue d'origine, "
-                                    "notamment les symptômes et noms de pièces. Retourne uniquement "
-                                    "la transcription, sans commentaire ni traduction."
-                                )
-                            },
-                            {
-                                "inlineData": {
-                                    "mimeType": fichier.content_type or "audio/webm",
-                                    "data": base64.b64encode(fichier.read()).decode("ascii"),
-                                }
-                            },
-                        ]
-                    }],
-                    "generationConfig": {"temperature": 0, "maxOutputTokens": 1024},
-                },
-                timeout=90,
-            )
-        except requests.RequestException as error:
-            logger.exception("Gemini transcription request failed (%s)", type(error).__name__)
-            raise TranscriptionIAError("Gemini est temporairement inaccessible. Réessayez dans un instant.") from error
+            extension = os.path.splitext(fichier.name)[1] or ".webm"
+            with tempfile.NamedTemporaryFile(suffix=extension) as fichier_temporaire:
+                for morceau in fichier.chunks():
+                    fichier_temporaire.write(morceau)
+                fichier_temporaire.flush()
+                fichier_gemini = client.files.upload(file=fichier_temporaire.name)
 
-        if response.status_code >= 400:
+            interaction = client.interactions.create(
+                model=self.model,
+                input=[{
+                    "type": "audio",
+                    "uri": fichier_gemini.uri,
+                    "mime_type": fichier_gemini.mime_type or fichier.content_type or "audio/webm",
+                }],
+                generation_config={
+                    "transcription_config": {
+                        "language_codes": [],
+                        "mode": "smart",
+                    }
+                },
+                store=False,
+            )
+            texte = interaction.output_text
+        except Exception as error:
+            logger.exception("Gemini transcription failed (%s)", type(error).__name__)
+            status_code = getattr(error, "code", None)
             messages = {
-                400: "Gemini a refusé l’audio. Vérifiez son format et le modèle configuré.",
                 401: "La clé Gemini est invalide. Vérifiez GEMINI_API_KEY dans le fichier .env.",
-                403: "La clé Gemini n’a pas accès à ce modèle ou à l’API Gemini.",
-                404: "Le modèle Gemini configuré est introuvable. Vérifiez GEMINI_TRANSCRIPTION_MODEL.",
-                429: "Le quota gratuit ou la limite de requêtes Gemini est atteint. Vérifiez les quotas Google AI Studio ou réessayez plus tard.",
+                403: "La clé Gemini n’a pas accès au modèle de transcription.",
+                404: "Le modèle Gemini de transcription est introuvable. Vérifiez GEMINI_TRANSCRIPTION_MODEL.",
+                429: "Le quota ou la limite de requêtes Gemini est atteint. Vérifiez Google AI Studio.",
             }
             raise TranscriptionIAError(messages.get(
-                response.status_code,
-                f"Gemini est indisponible (erreur HTTP {response.status_code}). Réessayez plus tard.",
-            ))
+                status_code,
+                "La transcription Gemini a échoué. Consultez le journal Django pour le détail, puis réessayez.",
+            )) from error
+        finally:
+            if fichier_gemini is not None:
+                try:
+                    client.files.delete(name=fichier_gemini.name)
+                except Exception:
+                    logger.warning("Could not delete temporary Gemini audio file", exc_info=True)
 
-        try:
-            texte = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-        except (KeyError, TypeError, ValueError) as error:
-            raise TranscriptionIAError("La réponse de transcription est invalide.") from error
-
-        texte = " ".join(str(texte).split())
+        texte = " ".join(str(texte or "").split())
         if not texte:
             raise TranscriptionIAError("Aucune parole n'a été détectée. Vous pouvez saisir le texte manuellement.")
         return texte

@@ -53,7 +53,7 @@ class DiagnosticApiTests(APITestCase):
         self.assertEqual(response.data["text"], "Téléphone bi daanu, écran bi dafa tas.")
         self.assertEqual(
             post.call_args.args[0],
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
         )
         self.assertEqual(post.call_args.kwargs["headers"]["x-goog-api-key"], "test-token")
         parts = post.call_args.kwargs["json"]["contents"][0]["parts"]

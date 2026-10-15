@@ -62,7 +62,7 @@ Diagnostic IA texte :
 
 Saisie vocale du diagnostic :
 - endpoint authentifié : POST /api/ia/transcription/ (multipart, champ `audio`, maximum 20 Mo)
-- fournisseur de transcription : Gemini API (audio inline), modèle `gemini-2.5-flash` par défaut
+- fournisseur de transcription : Gemini API (audio inline), modèle `gemini-3.8-flash` par défaut
 - configuration : `GEMINI_API_KEY` ; modèle optionnel : `GEMINI_TRANSCRIPTION_MODEL`
 - la détection automatique permet de transcrire le français, le wolof et leur mélange ; le texte reste modifiable avant le diagnostic
 - l'audio est transmis au fournisseur pour transcription et n'est pas conservé par l'application

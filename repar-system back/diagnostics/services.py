@@ -1,9 +1,12 @@
 import base64
 import json
+import logging
 import os
 import re
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class DiagnosticIAError(Exception):
@@ -54,6 +57,7 @@ class TraductionDiagnosticService:
                 timeout=45,
             )
         except requests.RequestException as error:
+            logger.exception("Gemini translation request failed (%s)", type(error).__name__)
             raise TraductionIAError("Gemini est temporairement inaccessible pour traduire la description.") from error
 
         if response.status_code >= 400:
@@ -122,6 +126,7 @@ class TranscriptionAudioService:
                 timeout=90,
             )
         except requests.RequestException as error:
+            logger.exception("Gemini transcription request failed (%s)", type(error).__name__)
             raise TranscriptionIAError("Gemini est temporairement inaccessible. Réessayez dans un instant.") from error
 
         if response.status_code >= 400:

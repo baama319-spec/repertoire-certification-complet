@@ -9,6 +9,7 @@ import {
   chargerReferentielsDiagnostic,
   chargerReparateursProches,
   trouverSpecialite,
+  traduireDescription,
   transcrireAudio,
 } from '../../services/serviceDiagnostic'
 
@@ -20,6 +21,9 @@ const erreur = ref('')
 const erreurVocale = ref('')
 const enregistrementEnCours = ref(false)
 const transcriptionEnCours = ref(false)
+const traductionEnCours = ref(false)
+const descriptionTraduite = ref(false)
+const descriptionOriginale = ref('')
 const diagnostic = ref(null)
 const localisations = ref([])
 const specialites = ref([])
@@ -101,6 +105,8 @@ const demarrerEnregistrement = async () => {
       try {
         const resultat = await transcrireAudio(audio)
         formulaire.value.description = resultat.text
+        descriptionTraduite.value = false
+        descriptionOriginale.value = ''
       } catch (error) {
         erreurVocale.value = error.message
       } finally {
@@ -166,9 +172,18 @@ const validerDiagnostic = () => {
 
 const lancerAnalyse = async () => {
   erreur.value = ''
+  if (traductionEnCours.value) return
   analyseEnCours.value = true
   try {
     validerDiagnostic()
+    if (!descriptionTraduite.value) {
+      traductionEnCours.value = true
+      descriptionOriginale.value = formulaire.value.description.trim()
+      const resultatTraduction = await traduireDescription(descriptionOriginale.value)
+      formulaire.value.description = resultatTraduction.description_francaise
+      descriptionTraduite.value = true
+      return
+    }
     diagnostic.value = await analyserDiagnostic({
       appareil: formulaire.value.materiel,
       marque: formulaire.value.modele,
@@ -185,7 +200,15 @@ const lancerAnalyse = async () => {
     erreur.value = error.message
   } finally {
     analyseEnCours.value = false
+    traductionEnCours.value = false
   }
+}
+
+const restaurerDescriptionOriginale = () => {
+  formulaire.value.description = descriptionOriginale.value
+  descriptionTraduite.value = false
+  descriptionOriginale.value = ''
+  erreur.value = ''
 }
 
 const recommencer = () => {
@@ -196,6 +219,8 @@ const recommencer = () => {
   localisationActive.value = false
   erreur.value = ''
   erreurVocale.value = ''
+  descriptionOriginale.value = ''
+  descriptionTraduite.value = false
 }
 
 onMounted(async () => {
@@ -231,7 +256,8 @@ onMounted(async () => {
         <div class="field-block">
           <div class="description-label-row"><label for="description">Que se passe-t-il ?</label><button class="voice-action" type="button" :disabled="transcriptionEnCours" :aria-pressed="enregistrementEnCours" @click="enregistrementEnCours ? arreterEnregistrement() : demarrerEnregistrement()">{{ enregistrementEnCours ? 'Arrêter l’enregistrement' : transcriptionEnCours ? 'Transcription en cours…' : 'Décrire à voix haute' }}</button></div>
           <textarea id="description" v-model.trim="formulaire.description" placeholder="Ex. : mon téléphone est tombé, l’écran s’allume mais le tactile ne répond plus…" rows="5"></textarea>
-          <span class="field-hint">Parlez en français, en wolof ou en mélangeant les deux. Relisez et corrigez la transcription avant l’analyse.</span>
+          <span class="field-hint">Saisissez ou dictez votre description en français, en wolof ou en mélangeant les deux. Gemini la traduira en français avant le diagnostic.</span>
+          <div v-if="descriptionTraduite" class="translation-review"><strong>Traduction française — vérifiez-la avant le diagnostic</strong><p v-if="descriptionOriginale">Texte original : {{ descriptionOriginale }}</p><button type="button" class="restore-description" @click="restaurerDescriptionOriginale">Revenir au texte original</button></div>
           <p v-if="enregistrementEnCours" class="voice-status" aria-live="polite">Enregistrement en cours — appuyez sur « Arrêter » quand vous avez terminé (2 min maximum).</p>
           <p v-else-if="transcriptionEnCours" class="voice-status" aria-live="polite">Transcription automatique de votre audio…</p>
           <p v-if="erreurVocale" class="error-message" role="alert">{{ erreurVocale }}</p>
@@ -239,8 +265,8 @@ onMounted(async () => {
         <div class="field-block"><label for="lieu">Où êtes-vous ?</label><select id="lieu" v-model="formulaire.lieu"><option v-for="ville in villesDisponibles" :key="ville" :value="ville">{{ ville }}</option></select></div>
         <p v-if="erreur" class="error-message" role="alert">{{ erreur }}</p>
         <p v-if="referentielsEnCours" class="field-hint">Chargement des zones d’intervention…</p>
-        <button class="main-action" type="button" :disabled="analyseEnCours || enregistrementEnCours || transcriptionEnCours || formulaire.description.trim().length < 10" @click="lancerAnalyse">{{ analyseEnCours ? 'Analyse en cours…' : 'Lancer mon diagnostic IA' }} <AppIcon name="arrow-right" :size="18" /></button>
-        <p class="privacy-note">Votre audio sert uniquement à produire une transcription; vous pouvez la vérifier avant l’analyse.</p>
+        <button class="main-action" type="button" :disabled="analyseEnCours || traductionEnCours || enregistrementEnCours || transcriptionEnCours || formulaire.description.trim().length < 10" @click="lancerAnalyse">{{ traductionEnCours ? 'Traduction en français…' : analyseEnCours ? 'Analyse en cours…' : descriptionTraduite ? 'Lancer mon diagnostic IA' : 'Traduire en français et vérifier' }} <AppIcon name="arrow-right" :size="18" /></button>
+        <p class="privacy-note">L’audio est transcrit puis la description, originale ou saisie, est traduite en français par Gemini. Vérifiez la traduction avant le diagnostic.</p>
       </div>
 
       <div v-else class="results-stack">
@@ -293,6 +319,9 @@ main { min-height: 70vh; padding: 20px 0 64px; background: radial-gradient(ellip
 .voice-action:disabled { opacity: .65; cursor: wait; }
 .voice-action[aria-pressed="true"] { border-color: #b43c46; background: #fff0f0; color: #a8323b; }
 .voice-status { color: #168273; font-size: 12px; }
+.translation-review { margin-top: 10px; padding: 12px 14px; border-left: 3px solid #168273; border-radius: 0 8px 8px 0; background: #eef8f5; color: #365d5a; font-size: 12px; line-height: 1.5; }
+.translation-review p { margin: 5px 0; overflow-wrap: anywhere; color: #687f7e; }
+.restore-description { padding: 0; border: 0; background: transparent; color: #087f70; font: inherit; font-size: 11px; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .main-action { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; margin-top: 18px; padding: 16px; border: 0; border-radius: 10px; background: #168273; color: white; font: inherit; font-weight: 800; cursor: pointer; }
 .main-action:disabled { opacity: .5; cursor: not-allowed; }
 .privacy-note { margin: 14px 0 0; text-align: center; }

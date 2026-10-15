@@ -4,8 +4,30 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .serializers import DiagnosticRequestSerializer, TranscriptionAudioRequestSerializer
-from .services import DiagnosticIAError, DiagnosticIAService, TranscriptionAudioService, TranscriptionIAError
+from .serializers import DiagnosticRequestSerializer, TranscriptionAudioRequestSerializer, TraductionDescriptionSerializer
+from .services import (
+    DiagnosticIAError,
+    DiagnosticIAService,
+    TranscriptionAudioService,
+    TranscriptionIAError,
+    TraductionDiagnosticService,
+    TraductionIAError,
+)
+
+
+class TraductionDescriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = TraductionDescriptionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            traduction = TraductionDiagnosticService().traduire(serializer.validated_data["description"])
+        except TraductionIAError as error:
+            return Response({"detail": str(error)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        return Response({"description_francaise": traduction}, status=status.HTTP_200_OK)
 
 
 class TranscriptionAudioView(APIView):

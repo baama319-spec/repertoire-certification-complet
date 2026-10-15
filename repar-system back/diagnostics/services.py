@@ -14,6 +14,72 @@ class TranscriptionIAError(Exception):
     """Erreur contrôlée lors de la transcription d'un enregistrement audio."""
 
 
+class TraductionIAError(Exception):
+    """Erreur contrôlée lors de la traduction d'une description de panne."""
+
+
+class TraductionDiagnosticService:
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    default_model = "gemini-3.8-flash"
+
+    def __init__(self, http_client=requests):
+        self.http_client = http_client
+        self.token = os.getenv("GEMINI_API_KEY", "")
+        self.model = os.getenv("GEMINI_TRANSLATION_MODEL", self.default_model)
+
+    def traduire(self, description):
+        if not self.token:
+            raise TraductionIAError("La traduction français-wolof n’est pas configurée.")
+
+        try:
+            response = self.http_client.post(
+                self.endpoint.format(model=self.model),
+                headers={"x-goog-api-key": self.token},
+                json={
+                    "contents": [{
+                        "parts": [{
+                            "text": (
+                                "Traduis en français cette description de panne. Elle peut être en wolof, "
+                                "en français ou mélanger les deux langues. Si elle est déjà en français, "
+                                "restitue-la sans en changer le sens. Préserve les marques, modèles, "
+                                "noms de pièces et symptômes; ne devine pas un terme wolof incertain, "
+                                "signale-le brièvement entre crochets. Retourne uniquement le texte français, "
+                                "sans introduction ni commentaire.\n\nDescription : "
+                                f"{description}"
+                            )
+                        }]
+                    }],
+                    "generationConfig": {"temperature": 0, "maxOutputTokens": 1024},
+                },
+                timeout=45,
+            )
+        except requests.RequestException as error:
+            raise TraductionIAError("Gemini est temporairement inaccessible pour traduire la description.") from error
+
+        if response.status_code >= 400:
+            messages = {
+                400: "Gemini n’a pas pu traiter cette description. Vérifiez le texte et le modèle configuré.",
+                401: "La clé Gemini est invalide. Vérifiez GEMINI_API_KEY dans le fichier .env.",
+                403: "La clé Gemini n’a pas accès au modèle de traduction.",
+                404: "Le modèle Gemini de traduction est introuvable. Vérifiez GEMINI_TRANSLATION_MODEL.",
+                429: "Le quota ou la limite de requêtes Gemini est atteint. Vérifiez les quotas Google AI Studio ou réessayez plus tard.",
+            }
+            raise TraductionIAError(messages.get(
+                response.status_code,
+                f"Gemini ne peut pas traduire la description (erreur HTTP {response.status_code}).",
+            ))
+
+        try:
+            traduction = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        except (KeyError, IndexError, TypeError, ValueError) as error:
+            raise TraductionIAError("La réponse de traduction Gemini est invalide.") from error
+
+        traduction = " ".join(str(traduction).split())
+        if not traduction:
+            raise TraductionIAError("Gemini n’a pas renvoyé de traduction. Vous pouvez modifier la description et réessayer.")
+        return traduction
+
+
 class TranscriptionAudioService:
     endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     default_model = "gemini-3.8-flash"

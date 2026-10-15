@@ -67,6 +67,12 @@ Saisie vocale du diagnostic :
 - la détection automatique permet de transcrire le français, le wolof et leur mélange ; le texte reste modifiable avant le diagnostic
 - l'audio est transmis au fournisseur pour transcription et n'est pas conservé par l'application
 
+Traduction avant le diagnostic :
+- endpoint authentifié : POST /api/ia/traduction/ avec une description texte
+- Gemini traduit le wolof ou les phrases mélangées en français avant l'appel au modèle de diagnostic
+- la traduction est présentée à l'utilisateur pour vérification et correction ; le texte original reste récupérable dans le formulaire
+- modèle optionnel : `GEMINI_TRANSLATION_MODEL` (par défaut : `gemini-3.8-flash`)
+
 Copier .env.example vers .env, puis remplacer la valeur d'exemple par une clé
 créée dans le compte OpenRouter. Garder cette clé secrète et ne jamais la committer.
 Le routage sélectionne le fournisseur disponible avec la plus faible latence.

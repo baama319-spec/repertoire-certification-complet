@@ -11,6 +11,13 @@ export async function analyserDiagnostic (donnees) {
   })
 }
 
+export async function traduireDescription (description) {
+  return api('/ia/traduction/', {
+    method: 'POST',
+    body: JSON.stringify({ description }),
+  })
+}
+
 export async function transcrireAudio (audio) {
   const donnees = new FormData()
   const extension = audio.type.includes('ogg') ? 'ogg' : audio.type.includes('mp4') ? 'mp4' : 'webm'

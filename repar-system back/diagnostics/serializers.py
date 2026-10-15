@@ -15,6 +15,16 @@ class TranscriptionAudioRequestSerializer(serializers.Serializer):
         return fichier
 
 
+class TraductionDescriptionSerializer(serializers.Serializer):
+    description = serializers.CharField(max_length=3000)
+
+    def validate_description(self, value):
+        description = " ".join(value.split())
+        if len(description) < 10:
+            raise serializers.ValidationError("Décrivez le problème avec au moins 10 caractères.")
+        return description
+
+
 class DiagnosticRequestSerializer(serializers.Serializer):
     appareil = serializers.CharField(max_length=150, required=False, allow_blank=True)
     marque = serializers.CharField(max_length=150, required=False, allow_blank=True)

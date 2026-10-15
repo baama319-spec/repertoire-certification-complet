@@ -33,6 +33,47 @@ class DiagnosticApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_translation_requires_authentication(self):
+        response = self.client.post(
+            "/api/ia/traduction/",
+            {"description": "Téléphone bi dafa doy waar."},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @patch.dict("os.environ", {"GEMINI_API_KEY": "test-token"})
+    @patch("diagnostics.services.requests.post")
+    def test_translation_returns_french_and_preserves_technical_meaning(self, post):
+        self.client.force_authenticate(self.user)
+        response_from_model = Mock(status_code=200)
+        response_from_model.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Le téléphone chauffe beaucoup."}]}}]
+        }
+        post.return_value = response_from_model
+
+        response = self.client.post(
+            "/api/ia/traduction/",
+            {"description": "Téléphone bi dafa doy waar."},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["description_francaise"], "Le téléphone chauffe beaucoup.")
+        self.assertIn("wolof", post.call_args.kwargs["json"]["contents"][0]["parts"][0]["text"])
+
+    def test_translation_rejects_short_description(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.post(
+            "/api/ia/traduction/",
+            {"description": "Panne"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("description", response.data)
+
     @patch.dict("os.environ", {"GEMINI_API_KEY": "test-token"})
     @patch("diagnostics.services.requests.post")
     def test_audio_transcription_returns_multilingual_text(self, post):
@@ -105,6 +146,10 @@ class DiagnosticApiTests(APITestCase):
         self.assertEqual(post.call_args.args[0], "https://openrouter.ai/api/v1/chat/completions")
         self.assertEqual(post.call_args.kwargs["json"]["model"], "google/gemini-2.5-flash")
         self.assertEqual(post.call_args.kwargs["json"]["provider"], {"sort": "latency"})
+        self.assertEqual(
+            post.call_args.kwargs["json"]["messages"][1]["content"],
+            '{"appareil": "Téléphone", "marque": "", "description": "Le téléphone ne charge plus depuis hier.", "ville": "", "quartier": ""}',
+        )
 
     def test_prompt_includes_safety_warning_for_self_repair(self):
         prompt = DiagnosticIAService._prompt_system()

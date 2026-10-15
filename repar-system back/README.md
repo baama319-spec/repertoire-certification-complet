@@ -60,6 +60,13 @@ Diagnostic IA texte :
 - configuration : OPENROUTER_API_KEY
 - modèle optionnel : OPENROUTER_DIAGNOSTIC_MODEL (par défaut : google/gemini-2.5-flash)
 
+Saisie vocale du diagnostic :
+- endpoint authentifié : POST /api/ia/transcription/ (multipart, champ `audio`, maximum 20 Mo)
+- fournisseur de transcription : OpenAI Audio Transcriptions, modèle `whisper-1` par défaut
+- configuration : `OPENAI_API_KEY` ; modèle optionnel : `OPENAI_TRANSCRIPTION_MODEL`
+- la détection automatique permet de transcrire le français, le wolof et leur mélange ; le texte reste modifiable avant le diagnostic
+- l'audio est transmis au fournisseur pour transcription et n'est pas conservé par l'application
+
 Copier .env.example vers .env, puis remplacer la valeur d'exemple par une clé
 créée dans le compte OpenRouter. Garder cette clé secrète et ne jamais la committer.
 Le routage sélectionne le fournisseur disponible avec la plus faible latence.
@@ -68,6 +75,8 @@ Django après toute modification de .env.
 
 Le modèle utilisé par défaut est google/gemini-2.5-flash. La réponse est une
 aide au diagnostic et doit être confirmée par un réparateur professionnel.
+La clé OpenAI est distincte de la clé OpenRouter. Garder les deux clés secrètes,
+ne jamais les exposer dans le frontend et redémarrer Django après leur configuration.
 
 Notifications e-mail (n8n) :
 - importer `n8n/repar-system-notification-workflow.json` dans n8n ;

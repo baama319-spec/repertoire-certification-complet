@@ -1,18 +1,92 @@
 <template>
   <AdministrationLayout>
-    <section class="dashboard">
+    <section class="dashboard" :class="{ 'dark-background': fondNoir }">
       <header class="title">
-        <div><h1>Tableau de bord & statistiques</h1><p>Mise à jour à l’ouverture de cette page.</p></div>
+        <div><h1>Tableau de bord & statistiques</h1></div>
+        <button class="background-toggle" type="button" @click="fondNoir = !fondNoir">
+          {{ fondNoir ? 'Fond clair' : 'Fond noir' }}
+        </button>
       </header>
       <p v-if="erreur" class="feedback error" role="alert">{{ erreur }}</p>
       <p v-else-if="chargement" class="feedback">Chargement des statistiques…</p>
       <section class="kpis">
         <article v-for="kpi in kpis" :key="kpi.label" :class="kpi.color"><h2>{{ kpi.label }}</h2><strong>{{ formatter(kpi.value) }}</strong></article>
       </section>
-      <section class="panels">
-        <article class="panel distribution"><h2>Répartition des demandes par spécialité</h2><div v-if="chart.length" class="distribution-content"><div class="donut" :style="{ background: donutGradient }"><b>{{ formatter(statistiques.demandes_totales) }}<small>Total</small></b></div><div class="legend"><p v-for="item in chart" :key="item.name"><i :style="{background:item.color}"></i><span>{{ item.name }}</span><b>{{ item.percent }}<small>{{ formatter(item.count) }} demande(s)</small></b></p></div></div><p v-else class="empty">Aucune demande disponible pour le moment.</p></article>
-        <article class="panel"><h2>Statistiques d'intervention</h2><div class="interventions"><div><span><AppIcon name="check-circle" :size="20"/></span><b>Taux d'acceptation</b><strong>{{ formatPercent(statistiques.taux_acceptation) }}</strong><small>{{ formatter(statistiques.demandes_acceptees) }} demande(s) acceptée(s) sur {{ formatter(statistiques.demandes_totales) }}</small></div></div></article>
+      <section class="panels analytics-grid">
+        <article class="panel intervention-card analytics-card">
+          <header class="analytics-heading">
+            <div>
+              <h2>Statistiques d’intervention</h2>
+            </div>
+          </header>
+
+          <div class="acceptance-content">
+            <div class="acceptance-ring" :style="{ '--acceptance': `${acceptancePercent}%` }" role="img" :aria-label="`Taux d’acceptation : ${formatPercent(statistiques.taux_acceptation)}`">
+              <div class="acceptance-ring-center">
+                <strong>{{ formatPercent(statistiques.taux_acceptation) }}</strong>
+                <span>Taux d’acceptation</span>
+              </div>
+            </div>
+
+            <div class="acceptance-summary">
+              <span class="summary-icon"><AppIcon name="check-circle" :size="19" /></span>
+              <div>
+                <strong>{{ formatter(statistiques.demandes_acceptees) }} demandes acceptées</strong>
+                <p>sur {{ formatter(statistiques.demandes_totales) }} demandes reçues</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="acceptance-footer">
+            <span><i class="accepted-dot"></i>Acceptées</span>
+            <strong>{{ formatter(statistiques.demandes_acceptees) }}</strong>
+            <span class="footer-divider"></span>
+            <span><i class="other-dot"></i>Autres demandes</span>
+            <strong>{{ formatter(demandesNonAcceptees) }}</strong>
+          </div>
+        </article>
+        <article class="panel status-chart-card">
+          <header class="status-chart-header">
+            <h2>Demandes par statut</h2>
+          </header>
+          <div v-if="demandesParStatut.length" class="status-chart-content">
+            <div class="status-donut-wrap">
+              <div class="status-donut" :style="{ background: statusDonutGradient }" role="img" :aria-label="`Répartition de ${formatter(totalDemandesStatut)} demandes par statut`">
+                <div class="status-donut-center">
+                  <span>Total</span>
+                  <strong>{{ formatter(totalDemandesStatut) }}</strong>
+                </div>
+              </div>
+            </div>
+            <div class="status-legend">
+              <div v-for="item in demandesParStatut" :key="item.key" class="status-legend-row">
+                <span class="status-legend-name"><i :style="{ background: item.color }"></i>{{ item.label }}</span>
+                <strong>{{ formatter(item.count) }}</strong>
+                <small>{{ item.percent }}%</small>
+              </div>
+            </div>
+          </div>
+          <div v-else class="status-chart-empty">Aucune demande à afficher pour le moment.</div>
+        </article>
       </section>
+
+      <section class="activity-card" aria-labelledby="activity-title">
+        <header class="activity-header">
+          <h2 id="activity-title">Activité récente</h2>
+          <RouterLink to="/admin/demandes">Voir tout <span aria-hidden="true">→</span></RouterLink>
+        </header>
+        <ol v-if="activitesRecentes.length" class="activity-list">
+          <li v-for="activite in activitesRecentes" :key="activite.id">
+            <time>{{ activite.heure }}</time>
+            <div class="activity-description">
+              <strong>{{ activite.titre }} · {{ activite.reference }}</strong>
+              <span>{{ activite.client }} · {{ activite.appareil }} · {{ activite.zone }}</span>
+            </div>
+          </li>
+        </ol>
+        <p v-else class="activity-empty">Aucune activité récente à afficher.</p>
+      </section>
+
     </section>
   </AdministrationLayout>
 </template>
@@ -20,12 +94,13 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import AdministrationLayout from '../../components/administrateur/AdministrationLayout.vue'
-import { chargerStatistiquesAdministration } from '../../services/serviceDemandes'
+import { chargerDemandesAdministration } from '../../services/serviceDemandes'
 
 const statistiques = ref({ clients_inscrits: 0, reparateurs_actifs: 0, demandes_totales: 0, zones_couvertes: 0, demandes_acceptees: 0, taux_acceptation: 0, repartition_demandes: [] })
+const demandes = ref([])
 const chargement = ref(true)
 const erreur = ref('')
-const couleurs = ['#1477f8', '#8fe2b1', '#43b980', '#5799f2', '#086d68', '#91d9c3']
+const fondNoir = ref(false)
 const formatter = valeur => new Intl.NumberFormat('fr-FR').format(Number(valeur) || 0)
 const formatPercent = valeur => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(valeur) || 0)}%`
 const kpis = computed(() => [
@@ -34,26 +109,69 @@ const kpis = computed(() => [
   { label: 'Demandes totales', value: statistiques.value.demandes_totales, color: 'purple' },
   { label: 'Zones couvertes', value: statistiques.value.zones_couvertes, color: 'orange' },
 ])
-const chart = computed(() => {
-  const total = statistiques.value.demandes_totales || 0
-  return statistiques.value.repartition_demandes.map((item, index) => ({
-    name: item.nom,
-    count: item.nombre,
-    percent: formatPercent(total ? item.nombre / total * 100 : 0),
-    color: couleurs[index % couleurs.length],
+const acceptancePercent = computed(() => Math.min(100, Math.max(0, Number(statistiques.value.taux_acceptation) || 0)))
+const demandesNonAcceptees = computed(() => Math.max(0, Number(statistiques.value.demandes_totales || 0) - Number(statistiques.value.demandes_acceptees || 0)))
+const totalDemandesStatut = computed(() => demandes.value.length || Number(statistiques.value.demandes_totales) || 0)
+const demandesParStatut = computed(() => {
+  if (!totalDemandesStatut.value) return []
+
+  const definitions = [
+    { key: 'EN_ATTENTE', label: 'En attente', color: '#73b7f7' },
+    { key: 'ACCEPTEE', label: 'Acceptées', color: '#8b7ce8' },
+    { key: 'REFUSEE', label: 'Refusées', color: '#f1b45d' },
+    { key: 'ANNULEE', label: 'Annulées', color: '#8497ad' },
+  ]
+  const counts = Object.fromEntries(definitions.map(item => [item.key, 0]))
+
+  demandes.value.forEach(demande => {
+    if (counts[demande.statut] !== undefined) counts[demande.statut] += 1
+  })
+
+  return definitions.map(item => ({
+    ...item,
+    count: counts[item.key],
+    percent: Math.round(counts[item.key] / totalDemandesStatut.value * 100),
   }))
 })
-const donutGradient = computed(() => {
+const activitesRecentes = computed(() => demandes.value
+  .slice()
+  .sort((a, b) => new Date(b.date_creation || 0) - new Date(a.date_creation || 0))
+  .slice(0, 4)
+  .map(demande => {
+    const date = new Date(demande.date_creation)
+    const labels = {
+      EN_ATTENTE: 'Nouvelle demande',
+      ACCEPTEE: 'Demande acceptée',
+      REFUSEE: 'Demande refusée',
+      ANNULEE: 'Demande annulée',
+    }
+    const client = demande.client_detail || {}
+    const localisation = demande.localisation_detail || {}
+    return {
+      id: demande.id,
+      reference: `#RS-${demande.id}`,
+      titre: labels[demande.statut] || 'Demande mise à jour',
+      client: client.nom || client.nom_complet || 'Client',
+      appareil: demande.appareil || demande.specialite_detail?.nom || 'Réparation',
+      zone: [localisation.ville, localisation.quartier].filter(Boolean).join(', ') || 'Zone non précisée',
+      heure: Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date),
+    }
+  }))
+const statusDonutGradient = computed(() => {
   let progression = 0
-  const parts = chart.value.map(item => {
-    const debut = progression
-    progression += statistiques.value.demandes_totales ? item.count / statistiques.value.demandes_totales * 100 : 0
-    return `${item.color} ${debut}% ${progression}%`
+  const parts = demandesParStatut.value.map(item => {
+    const start = progression
+    progression += item.count / totalDemandesStatut.value * 100
+    return `${item.color} ${start}% ${progression}%`
   })
   return `conic-gradient(${parts.join(', ')})`
 })
 onMounted(async () => {
-  try { statistiques.value = await chargerStatistiquesAdministration() }
+  try {
+    const resultat = await chargerDemandesAdministration()
+    statistiques.value = resultat.statistiques
+    demandes.value = resultat.demandes
+  }
   catch (error) { erreur.value = error.message }
   finally { chargement.value = false }
 })
@@ -65,87 +183,571 @@ onMounted(async () => {
 .panels > .panel{min-height:390px}
 .feedback{margin:0;padding:12px 14px;border-radius:8px;background:#eef8f5;color:#087f70}.feedback.error{background:#fff0f2;color:#c22f45}.empty{padding:52px 20px;text-align:center;color:#6682b2}
 
-/* Graphique des spécialités : présentation compacte inspirée du visuel de référence. */
-.panels > .distribution {
-  align-self: start;
-  min-height: 180px;
-  padding: 12px 14px;
-  border-radius: 9px;
+/* Analytics cards use the shared ReparSystem brand tokens. */
+.panels.analytics-grid {
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+  align-items: start;
+  gap: 18px;
 }
 
-.panel.distribution h2 {
-  color: #173f4d;
-  font-size: 13px;
+.analytics-card {
+  min-height: 318px !important;
+  padding: 22px 24px !important;
+  border: 1px solid var(--rs-border, #d7e8e3);
+  border-radius: 16px !important;
+  background: var(--rs-surface, #fff);
+  box-shadow: 0 10px 28px rgba(18, 63, 69, 0.06);
+}
+
+.analytics-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.analytics-heading h2 {
+  margin: 0 !important;
+  color: var(--rs-ink, #123f45) !important;
+  font-size: 17px !important;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  text-transform: none !important;
+}
+
+.eyebrow {
+  color: var(--rs-muted, #6d8588);
+  font-size: 9px;
   font-weight: 800;
-  text-transform: none;
+  letter-spacing: 0.12em;
 }
 
-.distribution-content {
-  min-height: 130px;
-  gap: 22px;
-  padding: 10px 8px 0;
+.heading-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--rs-primary-soft, #e7f5f1);
+  color: var(--rs-primary, #087f70);
 }
 
-.distribution .donut {
-  width: 96px;
-  height: 96px;
+.acceptance-content {
+  min-height: 208px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 3vw, 34px);
+  padding: 2px 0 16px;
 }
 
-.distribution .donut b {
-  width: 58px;
-  height: 58px;
-  color: #153d4c;
-  font-size: 15px;
+.acceptance-ring {
+  position: relative;
+  width: 174px;
+  height: 174px;
+  flex: 0 0 174px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(#4f86e8 var(--acceptance), #e8effb 0);
+  filter: drop-shadow(0 10px 14px rgba(8, 127, 112, 0.12));
 }
 
-.distribution .donut small,
-.distribution .legend small {
-  margin-top: 3px;
+.acceptance-ring::before {
+  content: '';
+  position: absolute;
+  inset: 11px;
+  border: 1px solid rgba(215, 232, 227, 0.75);
+  border-radius: 50%;
+  background: var(--rs-surface, #fff);
+}
+
+.acceptance-ring-center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 5px;
+  text-align: center;
+}
+
+.acceptance-ring-center strong {
+  color: var(--rs-ink, #123f45);
+  font-size: 27px;
+  letter-spacing: -0.045em;
+}
+
+.acceptance-ring-center span {
+  color: var(--rs-muted, #6d8588);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.acceptance-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  max-width: 190px;
+}
+
+.summary-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--rs-primary-soft, #e7f5f1);
+  color: var(--rs-primary, #087f70);
+}
+
+.acceptance-summary strong {
+  color: var(--rs-ink, #123f45);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.acceptance-summary p {
+  margin: 4px 0 0;
+  color: var(--rs-muted, #6d8588);
+  font-size: 11px;
+}
+
+.acceptance-footer {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid var(--rs-border, #d7e8e3);
+  color: var(--rs-muted, #6d8588);
   font-size: 10px;
 }
 
-.distribution .legend p {
-  min-height: 40px;
-  gap: 10px;
-  padding: 6px 0;
-  color: #294e5c;
+.acceptance-footer span:not(.footer-divider) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.acceptance-footer strong {
+  color: var(--rs-text, #284750);
   font-size: 11px;
 }
 
-.distribution .legend i {
-  width: 10px;
-  height: 10px;
-  flex: 0 0 10px;
+.accepted-dot,
+.other-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rs-primary, #087f70);
 }
 
-.distribution .legend span {
-  font-size: 11px;
-  font-weight: 700;
+.other-dot {
+  background: #a7c9bf;
 }
 
-.distribution .legend b {
-  min-width: 68px;
+.footer-divider {
+  width: 1px;
+  height: 17px;
+  margin: 0 3px;
+  background: var(--rs-border, #d7e8e3);
+}
+
+.analytics-empty {
+  min-height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.empty-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  background: var(--rs-primary-soft, #e7f5f1);
+  color: var(--rs-primary, #087f70);
+}
+
+.analytics-empty strong {
+  color: var(--rs-ink, #123f45);
   font-size: 12px;
 }
 
-.distribution .legend small {
-  color: #6b85a5;
-  font-weight: 400;
+.analytics-empty p {
+  margin: 6px 0 0;
+  color: var(--rs-muted, #6d8588);
+  font-size: 11px;
+}
+
+@media (max-width: 960px) {
+  .panels.analytics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 600px) {
-  .panels > .distribution {
-    min-height: auto;
+  .analytics-card {
+    min-height: auto !important;
+    padding: 18px !important;
   }
 
-  .distribution-content {
-    gap: 14px;
-    padding: 12px 2px 0;
+  .acceptance-content {
+    min-height: 190px;
+    gap: 18px;
   }
 
-  .distribution .donut {
-    width: 88px;
-    height: 88px;
+  .acceptance-ring {
+    width: 144px;
+    height: 144px;
+    flex-basis: 144px;
+  }
+
+  .acceptance-summary {
+    max-width: 145px;
+  }
+
+  .acceptance-footer {
+    flex-wrap: wrap;
+    padding: 10px 0;
   }
 }
+
+.kpis article {
+  min-height: 96px;
+  padding: 14px 18px;
+}
+
+.kpis strong {
+  margin-top: 12px;
+}
+
+.kpis h2 {
+  color: var(--rs-primary, #087f70) !important;
+}
+
+.status-chart-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 318px !important;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 15px !important;
+  border: 1px solid var(--rs-border, #d7e8e3);
+  border-radius: 12px !important;
+  background: var(--rs-surface, #fff);
+  box-shadow: 0 8px 22px rgba(18, 63, 69, 0.045);
+}
+
+.status-chart-header {
+  margin-bottom: 8px;
+}
+
+.status-chart-header h2 {
+  margin: 0;
+  color: var(--rs-ink, #123f45);
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  text-transform: none;
+}
+
+.status-chart-content {
+  flex: 1;
+  min-height: 235px;
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.status-donut-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.status-donut {
+  position: relative;
+  width: 138px;
+  height: 138px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  box-shadow: 0 7px 15px rgba(8, 127, 112, 0.09);
+}
+
+.status-donut::before {
+  content: '';
+  position: absolute;
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: var(--rs-surface, #fff);
+}
+
+.status-donut-center {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+
+.status-donut-center span {
+  color: var(--rs-muted, #6d8588);
+  font-size: 9px;
+}
+
+.status-donut-center strong {
+  color: var(--rs-ink, #123f45);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.status-legend {
+  min-width: 0;
+}
+
+.status-legend-row {
+  min-height: 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px 36px;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(215, 232, 227, 0.72);
+  color: var(--rs-text, #284750);
+  font-size: 9px;
+}
+
+.status-legend-row:last-child {
+  border-bottom: 0;
+}
+
+.status-legend-name {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-legend-name i {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border-radius: 50%;
+}
+
+.status-legend-row strong {
+  color: var(--rs-ink, #123f45);
+  font-size: 9px;
+  text-align: right;
+}
+
+.status-legend-row small {
+  color: #78909f;
+  font-size: 9px;
+  text-align: right;
+}
+
+.status-chart-empty {
+  min-height: 145px;
+  display: grid;
+  place-items: center;
+  color: var(--rs-muted, #6d8588);
+  font-size: 11px;
+}
+
+.activity-card {
+  padding: 20px 22px;
+  border: 1px solid var(--rs-border, #d7e8e3);
+  border-radius: 16px;
+  background: var(--rs-surface, #fff);
+  box-shadow: 0 12px 30px rgba(18, 63, 69, 0.07);
+  overflow: hidden;
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rs-border, #d7e8e3);
+}
+
+.activity-header h2 {
+  margin: 0;
+  color: var(--rs-ink, #123f45);
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.activity-header a {
+  color: var(--rs-primary, #087f70);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.activity-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-list li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 0;
+  min-height: 54px;
+}
+
+.activity-list li::before {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--rs-primary, #087f70);
+  content: '';
+}
+
+.activity-list li:not(:last-child)::after {
+  position: absolute;
+  top: 12px;
+  bottom: -1px;
+  left: 4px;
+  width: 1px;
+  background: var(--rs-border, #d7e8e3);
+  content: '';
+}
+
+.activity-list time {
+  padding-left: 20px;
+  color: var(--rs-muted, #6d8588);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.activity-description {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 0 0 14px 2px;
+}
+
+.activity-description strong {
+  overflow: hidden;
+  color: var(--rs-ink, #123f45);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-description span {
+  overflow: hidden;
+  color: #7189a7;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-empty {
+  margin: 0;
+  padding: 12px 0;
+  color: var(--rs-muted, #6d8588);
+  font-size: 11px;
+}
+
+@media (max-width: 600px) {
+  .activity-card {
+    padding: 16px;
+  }
+
+  .status-chart-card {
+    min-height: auto !important;
+  }
+
+  .status-chart-content {
+    min-height: 190px;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .status-donut {
+    width: 108px;
+    height: 108px;
+  }
+
+  .status-donut::before {
+    width: 66px;
+    height: 66px;
+  }
+}
+
+.dashboard > .title {
+  padding: 12px 16px;
+}
+
+.dashboard > .title h1 {
+  font-size: 18px;
+}
+
+.dashboard > .title {
+  justify-content: space-between;
+}
+
+.background-toggle {
+  padding: 8px 12px;
+  border: 1px solid #d7e8e3;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--rs-text, #284750);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard.dark-background {
+  position: relative;
+  z-index: 0;
+}
+
+.dashboard.dark-background::before {
+  position: absolute;
+  z-index: -1;
+  inset: -20px;
+  background: #111827;
+  content: '';
+}
+
+.dashboard.dark-background .background-toggle {
+  border-color: #596273;
+  background: #263244;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .dashboard.dark-background::before {
+    inset: -12px;
+  }
+}
+
 </style>

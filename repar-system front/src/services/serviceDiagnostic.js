@@ -11,6 +11,13 @@ export async function analyserDiagnostic (donnees) {
   })
 }
 
+export async function transcrireAudio (audio) {
+  const donnees = new FormData()
+  const extension = audio.type.includes('ogg') ? 'ogg' : audio.type.includes('mp4') ? 'mp4' : 'webm'
+  donnees.append('audio', audio, `description.${extension}`)
+  return api('/ia/transcription/', { method: 'POST', body: donnees })
+}
+
 export async function chargerReparateursProches ({ latitude, longitude, specialite }) {
   const params = new URLSearchParams({ latitude: String(latitude), longitude: String(longitude) })
   if (specialite) params.set('specialite', String(specialite))

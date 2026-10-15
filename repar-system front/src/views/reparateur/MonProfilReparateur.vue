@@ -124,4 +124,24 @@ const nomZone = id => { const zone = zonesDisponibles.value.find(item => item.id
 .personnel .photo>div{height:92px;margin:0}
 .personnel .nom{gap:16px;margin:0;padding:0}
 @media(max-width:520px){.personnel .corps{gap:10px}.photo img{width:72px;height:72px}.photo>div{width:72px;height:72px}.photo button{width:25px;height:25px}.personnel .nom{gap:8px}.personnel .nom label{font-size:11px}.personnel input{padding:0 8px;font-size:11px}}
+
+.check input { cursor: pointer; }
+.check input:checked { border-color: #087f70; background: #087f70; }
+.check input:focus-visible { outline: 3px solid rgba(8, 127, 112, .25); outline-offset: 2px; }
+
+.profil-titre h1 { color: #087f70; }
+.profil-page input:not([type='checkbox']),
+.profil-page select,
+.profil-page textarea {
+  border-color: #c8e2dc;
+  color: #284750;
+}
+
+.profil-page input:not([type='checkbox']):focus,
+.profil-page select:focus,
+.profil-page textarea:focus {
+  border-color: #087f70;
+  outline: 3px solid rgba(8, 127, 112, .16);
+  outline-offset: 1px;
+}
 </style>

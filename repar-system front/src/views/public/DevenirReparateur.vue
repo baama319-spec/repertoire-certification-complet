@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import EntetePublic from '../../components/public/EntetePublic.vue'
 import PiedDePage from '../../components/public/PiedDePage.vue'
@@ -12,10 +12,12 @@ const router = useRouter()
 const { utilisateur, enregistrerUtilisateur } = useAuthentification()
 const profil = ref(null), specialites = ref([]), zones = ref([])
 const chargement = ref(false), envoi = ref(false), erreur = ref(''), succes = ref(false)
+const messageErreur = ref(null)
 const formulaire = ref({ description: '', annee_experience: '', specialites: [], zones_intervention: [], latitude: null, longitude: null, photo_carte_identite: null, documents: [] })
 const connecte = computed(() => !!utilisateur.value)
 const statut = computed(() => profil.value?.statut_verification)
 const localisationEnCours = ref(false)
+const apercuCarteIdentite = ref('')
 const libelleZone = (zone) => [zone.ville, zone.quartier || zone.nom].filter(Boolean).join(', ')
 const detecterTypeDocument = (nom = '') => {
   const texte = nom.toLowerCase()
@@ -51,7 +53,7 @@ function validerCandidature () {
   if (!description || description.length < 20) {
     throw new Error('La présentation professionnelle doit contenir au moins 20 caractères.')
   }
-  if (!formulaire.value.annee_experience || Number(formulaire.value.annee_experience) < 0 || Number(formulaire.value.annee_experience) > 99) {
+  if (formulaire.value.annee_experience === '' || formulaire.value.annee_experience == null || Number(formulaire.value.annee_experience) < 0 || Number(formulaire.value.annee_experience) > 99) {
     throw new Error('Veuillez indiquer un nombre d’années d’expérience valide.')
   }
   if (!Array.isArray(formulaire.value.specialites) || formulaire.value.specialites.length === 0) {
@@ -70,25 +72,42 @@ function validerCandidature () {
 
 function gererCarteIdentite (event) {
   const fichier = event.target.files?.[0]
-  if (fichier) formulaire.value.photo_carte_identite = fichier
+  if (!fichier) return
+  if (apercuCarteIdentite.value) URL.revokeObjectURL(apercuCarteIdentite.value)
+  formulaire.value.photo_carte_identite = fichier
+  apercuCarteIdentite.value = fichier.type.startsWith('image/') ? URL.createObjectURL(fichier) : ''
+  event.target.value = ''
 }
 
 function ajouterDocument () {
-  formulaire.value.documents.push({ file: null, type: 'AUTRE' })
+  formulaire.value.documents.push({ file: null, type: 'AUTRE', previewUrl: '' })
 }
 
 function retirerDocument (index) {
+  const previewUrl = formulaire.value.documents[index]?.previewUrl
+  if (previewUrl) URL.revokeObjectURL(previewUrl)
   formulaire.value.documents = formulaire.value.documents.filter((_, i) => i !== index)
 }
 
 function gererDocument (index, event) {
   const fichier = event.target.files?.[0]
   if (!fichier) return
+  const ancienApercu = formulaire.value.documents[index]?.previewUrl
+  if (ancienApercu) URL.revokeObjectURL(ancienApercu)
   formulaire.value.documents[index] = {
     file: fichier,
     type: detecterTypeDocument(fichier.name),
+    previewUrl: fichier.type.startsWith('image/') ? URL.createObjectURL(fichier) : '',
   }
+  event.target.value = ''
 }
+
+onBeforeUnmount(() => {
+  if (apercuCarteIdentite.value) URL.revokeObjectURL(apercuCarteIdentite.value)
+  formulaire.value.documents.forEach(document => {
+    if (document.previewUrl) URL.revokeObjectURL(document.previewUrl)
+  })
+})
 
 function changerTypeDocument (index, type) {
   formulaire.value.documents[index].type = type
@@ -102,7 +121,11 @@ async function soumettre () {
     profil.value = await envoyerCandidature({ ...formulaire.value, annee_experience: Number(formulaire.value.annee_experience) })
     enregistrerUtilisateur({ ...utilisateur.value, profil_reparateur: { id: profil.value.id, statut_verification: profil.value.statut_verification, profil_verifie: profil.value.profil_verifie } })
     succes.value = true
-  } catch (err) { erreur.value = err.message } finally { envoi.value = false }
+  } catch (err) {
+    erreur.value = err.message
+    await nextTick()
+    messageErreur.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  } finally { envoi.value = false }
 }
 
 function activerLocalisation () {
@@ -136,9 +159,9 @@ function activerLocalisation () {
     <section v-else-if="statut === 'VALIDEE'" class="message"><span class="status verified">Candidature validée</span><h1>Votre candidature est validée</h1><p>Vous pouvez maintenant accéder à votre espace réparateur et apparaître dans l’annuaire. La certification Pro reste une décision distincte.</p><div class="actions"><RouterLink class="secondary" to="/">Retour à l’accueil</RouterLink><RouterLink class="primary" to="/pro/demandes">Accéder à mon espace réparateur</RouterLink></div></section>
     <section v-else-if="profil?.profil_verifie" class="message"><span class="status verified">Certifié Pro</span><h1>Vous êtes déjà réparateur certifié</h1><p>Votre profil professionnel est certifié.</p><RouterLink class="primary" to="/pro/demandes">Accéder à mon espace réparateur</RouterLink></section>
 
-    <form v-else class="candidature" @submit.prevent="soumettre">
+    <form v-else class="candidature" novalidate @submit.prevent="soumettre">
       <header><span class="eyebrow">DEVENIR RÉPARATEUR</span><h1>{{ statut === 'REFUSEE' ? 'Modifiez votre candidature' : 'Votre profil professionnel' }}</h1><p>Vos informations personnelles sont reprises depuis votre compte. Complétez uniquement vos données professionnelles.</p></header>
-      <p v-if="statut === 'REFUSEE' && profil.motif_refus" class="refus">{{ profil.motif_refus }}</p><p v-if="erreur" class="error">{{ erreur }}</p>
+      <p v-if="statut === 'REFUSEE' && profil.motif_refus" class="refus">{{ profil.motif_refus }}</p><p v-if="erreur" ref="messageErreur" class="error" role="alert" aria-live="assertive">{{ erreur }}</p>
       <section class="form-section"><h2>Profil professionnel</h2><label>Années d’expérience<input v-model.number="formulaire.annee_experience" type="number" min="0" max="99" required></label><label>Présentation professionnelle<textarea v-model.trim="formulaire.description" maxlength="1000" required placeholder="Décrivez votre expérience et les réparations que vous réalisez."></textarea></label></section>
       <section class="form-section"><h2>Vos spécialités</h2><p v-if="!specialites.length">Aucune spécialité disponible.</p><div class="choices"><label v-for="item in specialites" :key="item.id"><input v-model="formulaire.specialites" type="checkbox" :value="item.id"><span>{{ item.nom }}</span></label></div></section>
       <section class="form-section"><h2>Zones d’intervention</h2><p v-if="!zones.length">Aucune zone disponible.</p><div class="choices"><label v-for="zone in zones" :key="zone.id"><input v-model="formulaire.zones_intervention" type="checkbox" :value="zone.id"><span>{{ libelleZone(zone) }}</span></label></div></section>
@@ -147,9 +170,14 @@ function activerLocalisation () {
           <label class="upload-box required">
             <span class="upload-label">Carte d’identité obligatoire</span>
             <span class="upload-button">Parcourir…</span>
-            <input type="file" accept="image/*,.pdf" @change="gererCarteIdentite" required>
+            <input type="file" accept="image/*,.pdf" @change="gererCarteIdentite">
           </label>
-          <span class="file-name">{{ formulaire.photo_carte_identite ? formulaire.photo_carte_identite.name : 'Aucun fichier sélectionné.' }}</span>
+          <div v-if="formulaire.photo_carte_identite" class="selected-file">
+            <img v-if="apercuCarteIdentite" class="file-preview-image" :src="apercuCarteIdentite" :alt="`Aperçu de ${formulaire.photo_carte_identite.name}`">
+            <span v-else class="file-preview-icon"><AppIcon name="document" :size="20"/></span>
+            <span class="file-preview-details"><strong>{{ formulaire.photo_carte_identite.name }}</strong><small>{{ apercuCarteIdentite ? 'Aperçu de la photo' : 'Document ajouté' }}</small></span>
+          </div>
+          <span v-else class="file-name">Aucun fichier sélectionné. Les images seront visibles ici après sélection.</span>
         </div>
 
         <div class="documents-list">
@@ -165,7 +193,11 @@ function activerLocalisation () {
               <option value="AUTRE">Autre</option>
             </select>
             <button type="button" class="remove-button" @click="retirerDocument(index)" v-if="formulaire.documents.length > 1">Retirer</button>
-            <span class="document-file-name">{{ document.file ? document.file.name : 'Aucun fichier sélectionné.' }}</span>
+            <span class="document-file-name">
+              <img v-if="document.previewUrl" class="file-preview-image small" :src="document.previewUrl" :alt="`Aperçu de ${document.file.name}`">
+              <AppIcon v-else-if="document.file" name="document" :size="18"/>
+              <span>{{ document.file ? document.file.name : 'Aucun fichier sélectionné.' }}</span>
+            </span>
           </div>
           <button type="button" class="secondary add-doc" @click="ajouterDocument">+ Ajouter une autre pièce</button>
         </div>
@@ -390,6 +422,7 @@ function activerLocalisation () {
   margin: 0;
   font-weight: 500;
   position: relative;
+  cursor: pointer;
 }
 
 .choices input {
@@ -404,6 +437,26 @@ function activerLocalisation () {
   padding: 9px 12px;
   color: #526277;
   font-size: 12px;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.choices input:checked + span {
+  border-color: #087f70;
+  background: #e7f5f1;
+  color: #06695e;
+  box-shadow: 0 0 0 1px rgba(8, 127, 112, .08);
+}
+
+.choices input:checked + span::before {
+  content: '✓';
+  margin-right: 6px;
+  color: #087f70;
+  font-weight: 800;
+}
+
+.choices input:focus-visible + span {
+  outline: 3px solid rgba(8, 127, 112, .25);
+  outline-offset: 2px;
 }
 
 .documents-section {
@@ -475,8 +528,82 @@ function activerLocalisation () {
   overflow-wrap: anywhere;
 }
 
+.selected-file {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #dceee8;
+  border-radius: 10px;
+  background: #f7fcfa;
+}
+
+.file-preview-image {
+  width: 68px;
+  height: 58px;
+  flex: 0 0 auto;
+  border: 1px solid #dce7e8;
+  border-radius: 7px;
+  background: #fff;
+  object-fit: cover;
+}
+
+.file-preview-image.small {
+  width: 42px;
+  height: 38px;
+}
+
+.file-preview-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: #e8f7f1;
+  color: #087f70;
+}
+
+.file-preview-details {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.file-preview-details strong {
+  overflow: hidden;
+  color: #284750;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-preview-details small {
+  color: #087f70;
+  font-size: 10px;
+}
+
 .document-item {
   grid-template-columns: minmax(220px, 1fr) 160px 110px 1fr;
+}
+
+.document-file-name {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.document-file-name > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.document-file-name > :deep(svg) {
+  flex: 0 0 auto;
+  color: #087f70;
 }
 
 .document-item select {

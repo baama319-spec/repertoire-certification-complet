@@ -38,12 +38,133 @@
   gap: 0;
 }
 
+/* Standardize page titles across all administrator sections. */
+.administration .admin-workspace main h1 {
+  color: #087f70 !important;
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
 .administration .table th,
 .administration .table-wrap th,
 .administration .request-table th,
 .administration .zone-table th {
-  background: #123252 !important;
+  background: #087f70 !important;
   color: #fff !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* Keep regular table content black and consistent throughout the admin dashboard. */
+.administration .table td,
+.administration .table-wrap td,
+.administration .request-table td,
+.administration .zone-table td {
+  color: var(--rs-text, #284750) !important;
+  border-bottom-color: #dcecfb !important;
+  height: 86px !important;
+  padding: 10px 12px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  vertical-align: middle !important;
+}
+
+.administration .table td *:not(mark):not(button):not(svg):not(.badge):not(.status):not(.active):not(.blocked):not(.inactive):not(.on):not(.off):not(.Certifié-Pro):not(.Compte-bloqué),
+.administration .table-wrap td *:not(mark):not(button):not(svg):not(.badge):not(.status):not(.active):not(.blocked):not(.inactive):not(.on):not(.off):not(.Certifié-Pro):not(.Compte-bloqué),
+.administration .request-table td *:not(mark):not(button):not(svg):not(.badge):not(.status):not(.active):not(.blocked):not(.inactive):not(.on):not(.off):not(.Certifié-Pro):not(.Compte-bloqué),
+.administration .zone-table td *:not(mark):not(button):not(svg):not(.badge):not(.status):not(.active):not(.blocked):not(.inactive):not(.on):not(.off):not(.Certifié-Pro):not(.Compte-bloqué) {
+  color: var(--rs-text, #284750) !important;
+  font-weight: 400 !important;
+}
+
+.administration .table,
+.administration .table-wrap,
+.administration .request-table,
+.administration .zone-table {
+  border-color: #d9eafb !important;
+}
+
+.administration .table th,
+.administration .table-wrap th,
+.administration .request-table th,
+.administration .zone-table th {
+  height: 50px !important;
+  padding: 10px 12px !important;
+  text-align: left !important;
+  font-size: 11px !important;
+  letter-spacing: 0 !important;
+}
+
+.administration .table .pro img,
+.administration .table .person img {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+
+.administration .table .actions button,
+.administration .table-wrap .actions button,
+.administration .request-table .actions button,
+.administration .zone-table .actions button {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  width: 104px !important;
+  max-width: 104px !important;
+  height: 40px !important;
+  padding: 0 8px !important;
+  border: 1px solid #68a4ff !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #087f70 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.administration .clients-page .table .actions button {
+  width: calc(50% - 5px) !important;
+  max-width: none !important;
+  padding: 0 4px !important;
+  font-size: 11px !important;
+}
+
+.administration table tbody td .actions button:first-child,
+.administration .table .actions button:first-child,
+.administration .table-wrap .actions button:first-child,
+.administration .request-table .actions button:first-child,
+.administration .zone-table .actions button:first-child {
+  border-color: #68a4ff !important;
+  color: #087f70 !important;
+}
+
+.administration .table .actions button + button,
+.administration .table-wrap .actions button + button,
+.administration .request-table .actions button + button,
+.administration .zone-table .actions button + button {
+  margin-left: 6px !important;
+  border-color: #ff8092 !important;
+  color: #f33550 !important;
+}
+
+.administration .table td mark,
+.administration .table-wrap td .badge,
+.administration .table-wrap td .status,
+.administration .request-table td mark {
+  display: inline-block;
+  padding: 7px 10px !important;
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  white-space: nowrap;
+}
+
+/* Match the white / light-gray row pattern across every administrator table. */
+.administration table tbody > tr:nth-child(odd) {
+  background: #fff !important;
+}
+
+.administration table tbody > tr:nth-child(even) {
+  background: #f5f7f8 !important;
 }
 
 .administration .clients-page .filters button,
@@ -78,11 +199,52 @@
   flex: 0 0 80px;
 }
 
+/* Keep filter tabs consistent across admin pages: neutral white, one brand-green active state. */
+.administration .clients-page .filters button:not(.selected),
+.administration .demandes .filters button:not(.selected),
+.administration .page .filters button:not(.active) {
+  border-color: var(--rs-border, #d7e8e3) !important;
+  background: #fff !important;
+  color: var(--rs-text, #284750) !important;
+  box-shadow: none !important;
+}
+
+.administration .clients-page .filters button.selected,
+.administration .demandes .filters button.selected,
+.administration .page .filters button.active {
+  border-color: var(--rs-primary, #087f70) !important;
+  background: var(--rs-primary, #087f70) !important;
+  color: #fff !important;
+  box-shadow: 0 5px 12px rgba(8, 127, 112, 0.16) !important;
+}
+
+.administration .clients-page .filters button:not(.selected):hover,
+.administration .demandes .filters button:not(.selected):hover,
+.administration .page .filters button:not(.active):hover {
+  border-color: var(--rs-primary, #087f70) !important;
+  background: #fff !important;
+}
+
 @media (max-width: 760px) {
   .administration .clients-page .filters button,
   .administration .demandes .filters button,
   .administration .page .filters button {
     flex: 1 1 150px;
     width: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .administration .request-table td {
+    height: auto !important;
+    min-height: 48px;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+  }
+
+  .administration .request-table .actions button {
+    width: auto !important;
+    max-width: none !important;
+    height: 40px !important;
   }
 }

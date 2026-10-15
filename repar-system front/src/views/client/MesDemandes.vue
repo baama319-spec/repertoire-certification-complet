@@ -292,8 +292,8 @@ onBeforeUnmount(() => {
 .client .hero p{max-width:560px;margin:0;color:#d6e4f1;font-size:14px;line-height:1.6}
 .client main{display:block;width:calc(100% - 64px);max-width:1450px;margin:28px auto 40px;padding:0;background:transparent}
 .client .filters{display:flex;width:94%;gap:12px;overflow-x:auto;padding:11px;margin:0 auto 14px;border:1px solid #dce8f2;border-radius:12px;background:#fff}
-.client .filters button{flex:1;min-width:125px;height:44px;border:1px solid #d9e6f4;border-radius:10px;background:#fff;color:#164a86;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
-.client .filters button:hover{border-color:#8fcfc2;background:#f3fbf9}
+.client .filters button{flex:1;min-width:125px;height:44px;border:1px solid #d7e8e3;border-radius:10px;background:#fff;color:#284750;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.client .filters button:hover{border-color:#087f70;background:#fff}
 .client .filters .selected{border-color:#087f70;background:#087f70;color:#fff}
 .client .request{display:grid;grid-template-columns:116px minmax(280px,1.45fr) minmax(235px,1.15fr) minmax(175px,.8fr) 38px;gap:22px;align-items:center;min-height:172px;margin-top:14px;padding:18px 24px;border:1px solid #d6e5f4;border-radius:12px;background:#fff;box-shadow:0 5px 18px rgba(22,67,112,.045)}
 .client .device-thumbnail{display:grid;place-items:center;width:108px;height:110px;border:1px solid #e2edf5;border-radius:10px;background:linear-gradient(145deg,#eaf5f4,#eaf0fa);font-size:38px}
@@ -403,8 +403,8 @@ main{width:calc(100% - 64px);max-width:1450px;margin:28px auto 40px}
 @media(max-width:720px){main{width:auto;margin:18px 16px 30px}.request{grid-template-columns:76px minmax(0,1fr) 30px;gap:12px;padding:14px;min-height:0}.request>img{grid-row:1;width:76px;height:82px}.request>section:first-of-type{grid-column:2;grid-row:1}.request .pro{grid-column:1/3;grid-row:2;border-top:1px solid #e4edf7;border-left:0;padding:12px 0 0}.request .state{grid-column:1/3;grid-row:3;display:flex;align-items:center;gap:14px}.request .state button{flex:1;margin:0}.request>strong{grid-column:3;grid-row:1}}
 @media(max-width:520px){.detail-overlay{padding:12px}.detail-modal{padding:22px 17px;border-radius:13px}.detail-fields{grid-template-columns:1fr;gap:8px}.detail-title-row h2{font-size:19px}.detail-actions{justify-content:stretch}.detail-actions button{flex:1;padding:0 9px;font-size:11px}}
 /* Présentation en lignes, avec une hauteur plus confortable pour chaque carte. */
-.client .request{width:94%;grid-template-columns:62px minmax(0,1.55fr) minmax(210px,1.05fr) minmax(130px,.72fr) 18px;gap:12px;min-height:142px;margin:8px auto 0;padding:14px 12px;border-radius:10px;box-shadow:none}
-.client .device-thumbnail{width:60px;height:64px;border:0;border-radius:8px;background:linear-gradient(145deg,#e8f7f3,#eff7fa);color:#087f70;font-size:30px}
+.client .request{width:84%;grid-template-columns:56px minmax(0,1.55fr) minmax(200px,1.05fr) minmax(125px,.72fr) 16px;gap:10px;min-height:150px;margin:16px auto 0;padding:10px 12px;border-radius:10px;box-shadow:none}
+.client .device-thumbnail{width:54px;height:58px;border:0;border-radius:8px;background:linear-gradient(145deg,#e8f7f3,#eff7fa);color:#087f70;font-size:27px}
 .client .request h2{font-size:13px;line-height:1.25}
 .client .request p{margin:4px 0;color:#58748b;font-size:10px;line-height:1.3}
 .client .request-summary>span{margin:2px 4px 2px 0;padding:4px 7px;border-radius:999px;font-size:8px}

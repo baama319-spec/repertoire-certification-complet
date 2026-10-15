@@ -1,6 +1,7 @@
 from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -22,6 +23,47 @@ class DiagnosticApiTests(APITestCase):
         response = self.client.post(self.url, {"description": "Mon appareil ne démarre plus"})
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_audio_transcription_requires_authentication(self):
+        response = self.client.post(
+            "/api/ia/transcription/",
+            {"audio": SimpleUploadedFile("voix.webm", b"audio", content_type="audio/webm")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-token"})
+    @patch("diagnostics.services.requests.post")
+    def test_audio_transcription_returns_multilingual_text(self, post):
+        self.client.force_authenticate(self.user)
+        response_from_model = Mock(status_code=200)
+        response_from_model.json.return_value = {"text": "Téléphone bi daanu, écran bi dafa tas."}
+        post.return_value = response_from_model
+
+        response = self.client.post(
+            "/api/ia/transcription/",
+            {"audio": SimpleUploadedFile("voix.webm", b"audio", content_type="audio/webm")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["text"], "Téléphone bi daanu, écran bi dafa tas.")
+        self.assertEqual(post.call_args.args[0], "https://api.openai.com/v1/audio/transcriptions")
+        self.assertEqual(post.call_args.kwargs["data"]["model"], "whisper-1")
+        self.assertIn("wolof", post.call_args.kwargs["data"]["prompt"])
+
+    def test_audio_transcription_rejects_unsupported_file_type(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.post(
+            "/api/ia/transcription/",
+            {"audio": SimpleUploadedFile("voix.exe", b"audio", content_type="application/octet-stream")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("audio", response.data)
 
     def test_diagnostic_rejects_short_description(self):
         self.client.force_authenticate(self.user)
@@ -63,6 +105,8 @@ class DiagnosticApiTests(APITestCase):
         self.assertIn("professionnel du diagnostic", prompt)
         self.assertIn("réparer", prompt)
         self.assertIn("vous-même", prompt)
+        self.assertIn("wolof", prompt)
+        self.assertIn("mélange des deux langues", prompt)
 
     @patch.dict("os.environ", {}, clear=True)
     def test_diagnostic_returns_service_unavailable_when_not_configured(self):

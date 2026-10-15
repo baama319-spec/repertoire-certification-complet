@@ -1,5 +1,5 @@
 /* Design system shared by every space of ReparSystem.
-   Green is the only brand accent; neutral surfaces deliberately stay white or warm green. */
+  Green is the only brand accent; neutral surfaces deliberately stay white or warm green. */
 :root {
   --rs-primary: #087f70;
   --rs-primary-dark: #06695e;

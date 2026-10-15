@@ -24,7 +24,7 @@
           <td class="id" data-label="ID Demande">{{ item.id }}</td>
           <td class="date" data-label="Date">{{ item.date }}</td>
           <td class="client" data-label="Client">{{ item.client }}</td>
-          <td class="device" data-label="Appareil"><AppIcon :name="item.icon" :size="16"/> {{ item.device }}</td>
+          <td class="device" data-label="Appareil">{{ item.device }}</td>
           <td data-label="Statut"><mark :class="item.status.toLowerCase().replace(' ', '-')">{{ item.status }}</mark></td>
           <td class="actions" data-label="Actions">
             <button type="button" class="detail" @click="$emit('detail', item)">Voir plus</button>

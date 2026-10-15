@@ -9,6 +9,58 @@ class DiagnosticIAError(Exception):
     """Erreur contrôlée lors de l'appel ou du décodage du modèle IA."""
 
 
+class TranscriptionIAError(Exception):
+    """Erreur contrôlée lors de la transcription d'un enregistrement audio."""
+
+
+class TranscriptionAudioService:
+    endpoint = "https://api.openai.com/v1/audio/transcriptions"
+    default_model = "whisper-1"
+
+    def __init__(self, http_client=requests):
+        self.http_client = http_client
+        self.token = os.getenv("OPENAI_API_KEY", "")
+        self.model = os.getenv("OPENAI_TRANSCRIPTION_MODEL", self.default_model)
+
+    def transcrire(self, fichier):
+        if not self.token:
+            raise TranscriptionIAError("La transcription vocale n'est pas configurée.")
+
+        try:
+            response = self.http_client.post(
+                self.endpoint,
+                headers={"Authorization": f"Bearer {self.token}"},
+                files={"file": (fichier.name, fichier.read(), fichier.content_type)},
+                data={
+                    "model": self.model,
+                    "response_format": "json",
+                    "prompt": (
+                        "Transcris fidèlement les paroles en français, en wolof ou dans leur mélange. "
+                        "Garde la langue d'origine, sans traduire, et respecte les noms de pièces "
+                        "et les symptômes d'appareils électroniques."
+                    ),
+                },
+                timeout=90,
+            )
+        except requests.RequestException as error:
+            raise TranscriptionIAError("Le service de transcription est temporairement indisponible.") from error
+
+        if response.status_code >= 400:
+            raise TranscriptionIAError(
+                f"Le service de transcription est indisponible (erreur HTTP {response.status_code})."
+            )
+
+        try:
+            texte = response.json()["text"]
+        except (KeyError, TypeError, ValueError) as error:
+            raise TranscriptionIAError("La réponse de transcription est invalide.") from error
+
+        texte = " ".join(str(texte).split())
+        if not texte:
+            raise TranscriptionIAError("Aucune parole n'a été détectée. Vous pouvez saisir le texte manuellement.")
+        return texte
+
+
 class DiagnosticIAService:
     endpoint = "https://openrouter.ai/api/v1/chat/completions"
     default_model = "google/gemini-2.5-flash"
@@ -69,7 +121,7 @@ class DiagnosticIAService:
     @staticmethod
     def _prompt_system():
         return """Tu es l'assistant de pré-diagnostic de ReparSystem.
-Analyse les pannes d'appareils et équipements décrites en français.
+Comprends les descriptions de pannes en français, en wolof et dans un mélange des deux langues, y compris les formulations orales et les noms locaux de symptômes ou de pièces. Interprète le sens sans pénaliser les fautes de transcription. Ne traduis pas arbitrairement un terme wolof incertain : pose une question de clarification dans la langue principalement utilisée lorsque c'est nécessaire. Réponds dans cette même langue autant que possible.
 Tu ne dois jamais présenter une hypothèse comme une certitude et tu dois recommander un réparateur pour toute intervention technique.
 Si la description mentionne fumée, odeur de brûlé, étincelles, fuite de gaz, batterie gonflée ou danger électrique, mets niveau_urgence à \"urgent\" et conseille d'arrêter et débrancher l'appareil si cela est possible sans danger.
 Dans le champ avertissement, ajoute toujours un rappel de sécurité explicite : ne pas essayer de réparer l'appareil ou le chargeur vous-même si vous n'êtes pas un professionnel du diagnostic. Demande de contacter un réparateur qualifié et de ne pas manipuler les composants électroniques sous tension.

@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import re
@@ -14,13 +15,13 @@ class TranscriptionIAError(Exception):
 
 
 class TranscriptionAudioService:
-    endpoint = "https://api.openai.com/v1/audio/transcriptions"
-    default_model = "whisper-1"
+    endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    default_model = "gemini-2.5-flash"
 
     def __init__(self, http_client=requests):
         self.http_client = http_client
-        self.token = os.getenv("OPENAI_API_KEY", "")
-        self.model = os.getenv("OPENAI_TRANSCRIPTION_MODEL", self.default_model)
+        self.token = os.getenv("GEMINI_API_KEY", "")
+        self.model = os.getenv("GEMINI_TRANSCRIPTION_MODEL", self.default_model)
 
     def transcrire(self, fichier):
         if not self.token:
@@ -28,30 +29,50 @@ class TranscriptionAudioService:
 
         try:
             response = self.http_client.post(
-                self.endpoint,
-                headers={"Authorization": f"Bearer {self.token}"},
-                files={"file": (fichier.name, fichier.read(), fichier.content_type)},
-                data={
-                    "model": self.model,
-                    "response_format": "json",
-                    "prompt": (
-                        "Transcris fidèlement les paroles en français, en wolof ou dans leur mélange. "
-                        "Garde la langue d'origine, sans traduire, et respecte les noms de pièces "
-                        "et les symptômes d'appareils électroniques."
-                    ),
+                self.endpoint.format(model=self.model),
+                headers={"x-goog-api-key": self.token},
+                json={
+                    "contents": [{
+                        "parts": [
+                            {
+                                "text": (
+                                    "Transcris fidèlement et intégralement les paroles de cet audio. "
+                                    "La personne peut parler français, wolof ou mélanger les deux. "
+                                    "Garde autant que possible les mots dans leur langue d'origine, "
+                                    "notamment les symptômes et noms de pièces. Retourne uniquement "
+                                    "la transcription, sans commentaire ni traduction."
+                                )
+                            },
+                            {
+                                "inlineData": {
+                                    "mimeType": fichier.content_type or "audio/webm",
+                                    "data": base64.b64encode(fichier.read()).decode("ascii"),
+                                }
+                            },
+                        ]
+                    }],
+                    "generationConfig": {"temperature": 0, "maxOutputTokens": 1024},
                 },
                 timeout=90,
             )
         except requests.RequestException as error:
-            raise TranscriptionIAError("Le service de transcription est temporairement indisponible.") from error
+            raise TranscriptionIAError("Gemini est temporairement inaccessible. Réessayez dans un instant.") from error
 
         if response.status_code >= 400:
-            raise TranscriptionIAError(
-                f"Le service de transcription est indisponible (erreur HTTP {response.status_code})."
-            )
+            messages = {
+                400: "Gemini a refusé l’audio. Vérifiez son format et le modèle configuré.",
+                401: "La clé Gemini est invalide. Vérifiez GEMINI_API_KEY dans le fichier .env.",
+                403: "La clé Gemini n’a pas accès à ce modèle ou à l’API Gemini.",
+                404: "Le modèle Gemini configuré est introuvable. Vérifiez GEMINI_TRANSCRIPTION_MODEL.",
+                429: "Le quota gratuit ou la limite de requêtes Gemini est atteint. Vérifiez les quotas Google AI Studio ou réessayez plus tard.",
+            }
+            raise TranscriptionIAError(messages.get(
+                response.status_code,
+                f"Gemini est indisponible (erreur HTTP {response.status_code}). Réessayez plus tard.",
+            ))
 
         try:
-            texte = response.json()["text"]
+            texte = response.json()["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, TypeError, ValueError) as error:
             raise TranscriptionIAError("La réponse de transcription est invalide.") from error
 

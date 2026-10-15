@@ -62,8 +62,8 @@ Diagnostic IA texte :
 
 Saisie vocale du diagnostic :
 - endpoint authentifié : POST /api/ia/transcription/ (multipart, champ `audio`, maximum 20 Mo)
-- fournisseur de transcription : OpenAI Audio Transcriptions, modèle `whisper-1` par défaut
-- configuration : `OPENAI_API_KEY` ; modèle optionnel : `OPENAI_TRANSCRIPTION_MODEL`
+- fournisseur de transcription : Gemini API (audio inline), modèle `gemini-2.5-flash` par défaut
+- configuration : `GEMINI_API_KEY` ; modèle optionnel : `GEMINI_TRANSCRIPTION_MODEL`
 - la détection automatique permet de transcrire le français, le wolof et leur mélange ; le texte reste modifiable avant le diagnostic
 - l'audio est transmis au fournisseur pour transcription et n'est pas conservé par l'application
 
@@ -75,8 +75,9 @@ Django après toute modification de .env.
 
 Le modèle utilisé par défaut est google/gemini-2.5-flash. La réponse est une
 aide au diagnostic et doit être confirmée par un réparateur professionnel.
-La clé OpenAI est distincte de la clé OpenRouter. Garder les deux clés secrètes,
-ne jamais les exposer dans le frontend et redémarrer Django après leur configuration.
+La clé Gemini est distincte de la clé OpenRouter. Créer une clé dans Google AI Studio,
+la garder secrète, ne jamais l'exposer dans le frontend et redémarrer Django après
+sa configuration. Les quotas et la disponibilité dépendent de l'offre Google associée.
 
 Notifications e-mail (n8n) :
 - importer `n8n/repar-system-notification-workflow.json` dans n8n ;

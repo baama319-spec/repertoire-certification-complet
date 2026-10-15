@@ -33,12 +33,14 @@ class DiagnosticApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    @patch.dict("os.environ", {"OPENAI_API_KEY": "test-token"})
+    @patch.dict("os.environ", {"GEMINI_API_KEY": "test-token"})
     @patch("diagnostics.services.requests.post")
     def test_audio_transcription_returns_multilingual_text(self, post):
         self.client.force_authenticate(self.user)
         response_from_model = Mock(status_code=200)
-        response_from_model.json.return_value = {"text": "Téléphone bi daanu, écran bi dafa tas."}
+        response_from_model.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Téléphone bi daanu, écran bi dafa tas."}]}}]
+        }
         post.return_value = response_from_model
 
         response = self.client.post(
@@ -49,9 +51,14 @@ class DiagnosticApiTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["text"], "Téléphone bi daanu, écran bi dafa tas.")
-        self.assertEqual(post.call_args.args[0], "https://api.openai.com/v1/audio/transcriptions")
-        self.assertEqual(post.call_args.kwargs["data"]["model"], "whisper-1")
-        self.assertIn("wolof", post.call_args.kwargs["data"]["prompt"])
+        self.assertEqual(
+            post.call_args.args[0],
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        )
+        self.assertEqual(post.call_args.kwargs["headers"]["x-goog-api-key"], "test-token")
+        parts = post.call_args.kwargs["json"]["contents"][0]["parts"]
+        self.assertIn("wolof", parts[0]["text"])
+        self.assertIn("inlineData", parts[1])
 
     def test_audio_transcription_rejects_unsupported_file_type(self):
         self.client.force_authenticate(self.user)
@@ -118,3 +125,18 @@ class DiagnosticApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    @patch.dict("os.environ", {"GEMINI_API_KEY": "test-token"})
+    @patch("diagnostics.services.requests.post")
+    def test_audio_transcription_explains_gemini_quota_limit(self, post):
+        self.client.force_authenticate(self.user)
+        post.return_value = Mock(status_code=429)
+
+        response = self.client.post(
+            "/api/ia/transcription/",
+            {"audio": SimpleUploadedFile("voix.webm", b"audio", content_type="audio/webm")},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+        self.assertIn("quota", response.data["detail"])

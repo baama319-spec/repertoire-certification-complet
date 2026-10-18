@@ -1,13 +1,25 @@
 import { api } from './api'
+import { convertirAudioEnWav } from './audioWav'
 
 const listeDepuisReponse = (reponse) => Array.isArray(reponse) ? reponse : reponse.results || []
 
 const correspond = (valeur, cible) => String(valeur || '').toLocaleLowerCase().trim() === String(cible || '').toLocaleLowerCase().trim()
 
-export async function analyserDiagnostic (donnees) {
+export async function analyserDiagnostic (donnees, photos = []) {
+  const body = photos.length
+    ? (() => {
+        const formulaire = new FormData()
+        Object.entries(donnees).forEach(([cle, valeur]) => {
+          if (valeur !== null && valeur !== undefined && valeur !== '') formulaire.append(cle, valeur)
+        })
+        photos.forEach((photo) => formulaire.append('photos', photo))
+        return formulaire
+      })()
+    : JSON.stringify(donnees)
+
   return api('/ia/diagnostic/', {
     method: 'POST',
-    body: JSON.stringify(donnees),
+    body,
   })
 }
 
@@ -18,10 +30,11 @@ export async function traduireDescription (description) {
   })
 }
 
-export async function transcrireAudio (audio) {
+export async function transcrireAudio (audio, language = 'auto') {
+  const compatible = await convertirAudioEnWav(audio)
   const donnees = new FormData()
-  const extension = audio.type.includes('ogg') ? 'ogg' : audio.type.includes('mp4') ? 'mp4' : 'webm'
-  donnees.append('audio', audio, `description.${extension}`)
+  donnees.append('audio', compatible, 'description.wav')
+  donnees.append('language', language)
   return api('/ia/transcription/', { method: 'POST', body: donnees })
 }
 

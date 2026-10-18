@@ -62,17 +62,27 @@ Diagnostic IA texte :
 
 Saisie vocale du diagnostic :
 - endpoint authentifié : POST /api/ia/transcription/ (multipart, champ `audio`, maximum 20 Mo)
-- fournisseur de transcription : Gemini 3.5 Transcribe via l’Interactions API et l’API Files (modèle spécialisé speech-to-text)
-- configuration : `GEMINI_API_KEY` ; modèle optionnel : `GEMINI_TRANSCRIPTION_MODEL`
-- la détection automatique gère le changement de langue ; le français et le texte transcrit restent modifiables avant le diagnostic
-- l'audio est envoyé à Gemini et le fichier temporaire distant est supprimé après transcription
-- Wolof n'est pas explicitement listé parmi les langues officiellement prises en charge par Gemini 3.5 Transcribe ; valider des échantillons wolof réels avant de promettre cette couverture
+- fournisseur : Soynade Oolel Speech, endpoint multipart `POST https://api.soynade.ai/v1/audio/transcriptions`
+- configuration : `SOYNADE_API_KEY` dans le `.env` backend
+- le frontend convertit l’enregistrement navigateur en WAV ; français et wolof sont transmis selon la langue choisie ou détectés automatiquement
+- Soynade utilise des crédits prépayés ; vérifier le solde et les tarifs du workspace
+
+Voix des réponses de l’assistant :
+- endpoint public limité en débit : POST /api/ia/voix/ avec `{ "text": "..." }`, renvoie un MP3
+- fournisseur : Soynade Oolel Voices (`POST https://api.soynade.ai/v1/text-to-speech`)
+- définir `SOYNADE_API_KEY` dans le `.env` du backend ; la clé ne doit jamais être exposée dans le frontend
+- la langue de synthèse suit le choix Français/Wolof de l’interface ; sans activation ou si l’API échoue, la voix native du navigateur reste disponible
+
+Transcription vocale (assistant et diagnostic) :
+- fournisseur : Soynade Oolel Speech, endpoint multipart `POST https://api.soynade.ai/v1/audio/transcriptions`
+- le frontend convertit les enregistrements navigateur en WAV avant envoi ; les langues `fr` et `wo` peuvent être indiquées ou laissées en détection automatique
+- Soynade utilise des crédits prépayés ; consulter le tarif et le solde du workspace avant utilisation soutenue
 
 Traduction avant le diagnostic :
 - endpoint authentifié : POST /api/ia/traduction/ avec une description texte
 - Gemini traduit le wolof ou les phrases mélangées en français avant l'appel au modèle de diagnostic
-- la traduction est présentée à l'utilisateur pour vérification et correction ; le texte original reste récupérable dans le formulaire
-- modèle optionnel : `GEMINI_TRANSLATION_MODEL` (par défaut : `gemini-3.8-flash`)
+- la traduction s'exécute en arrière-plan et le formulaire conserve la description saisie
+- fournisseur/configuration : Gemini, clé `GEMINI_API_KEY` ; modèle optionnel `GEMINI_TRANSLATION_MODEL` (par défaut : `gemini-3.6-flash`)
 
 Copier .env.example vers .env, puis remplacer la valeur d'exemple par une clé
 créée dans le compte OpenRouter. Garder cette clé secrète et ne jamais la committer.

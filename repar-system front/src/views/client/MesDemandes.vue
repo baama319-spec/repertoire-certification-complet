@@ -403,8 +403,8 @@ main{width:calc(100% - 64px);max-width:1450px;margin:28px auto 40px}
 @media(max-width:720px){main{width:auto;margin:18px 16px 30px}.request{grid-template-columns:76px minmax(0,1fr) 30px;gap:12px;padding:14px;min-height:0}.request>img{grid-row:1;width:76px;height:82px}.request>section:first-of-type{grid-column:2;grid-row:1}.request .pro{grid-column:1/3;grid-row:2;border-top:1px solid #e4edf7;border-left:0;padding:12px 0 0}.request .state{grid-column:1/3;grid-row:3;display:flex;align-items:center;gap:14px}.request .state button{flex:1;margin:0}.request>strong{grid-column:3;grid-row:1}}
 @media(max-width:520px){.detail-overlay{padding:12px}.detail-modal{padding:22px 17px;border-radius:13px}.detail-fields{grid-template-columns:1fr;gap:8px}.detail-title-row h2{font-size:19px}.detail-actions{justify-content:stretch}.detail-actions button{flex:1;padding:0 9px;font-size:11px}}
 /* Présentation en lignes, avec une hauteur plus confortable pour chaque carte. */
-.client .request{width:84%;grid-template-columns:56px minmax(0,1.55fr) minmax(200px,1.05fr) minmax(125px,.72fr) 16px;gap:10px;min-height:150px;margin:16px auto 0;padding:10px 12px;border-radius:10px;box-shadow:none}
-.client .device-thumbnail{width:54px;height:58px;border:0;border-radius:8px;background:linear-gradient(145deg,#e8f7f3,#eff7fa);color:#087f70;font-size:27px}
+.client .request{width:94%;grid-template-columns:62px minmax(0,1.55fr) minmax(210px,1.05fr) minmax(130px,.72fr) 18px;gap:12px;min-height:142px;margin:8px auto 0;padding:14px 12px;border-radius:10px;box-shadow:none}
+.client .device-thumbnail{width:60px;height:64px;border:0;border-radius:8px;background:linear-gradient(145deg,#e8f7f3,#eff7fa);color:#087f70;font-size:30px}
 .client .request h2{font-size:13px;line-height:1.25}
 .client .request p{margin:4px 0;color:#58748b;font-size:10px;line-height:1.3}
 .client .request-summary>span{margin:2px 4px 2px 0;padding:4px 7px;border-radius:999px;font-size:8px}

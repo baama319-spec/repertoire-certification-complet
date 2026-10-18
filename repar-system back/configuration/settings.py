@@ -67,6 +67,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticatedOrReadOnly"],
     "DEFAULT_PAGINATION_CLASS": "commun.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_RATES": {"anon": "20/hour"},
 }
 
 # URL du workflow n8n qui distribue les e-mails de notification. En production,

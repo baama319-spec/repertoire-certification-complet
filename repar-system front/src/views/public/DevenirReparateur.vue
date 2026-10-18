@@ -146,8 +146,7 @@ function activerLocalisation () {
 <template>
   <div class="devenir-page" :style="{ '--devenir-bg': `url(${imageFond})` }">
     <EntetePublic />
-  </div>
-  <main class="devenir" :style="{ '--devenir-bg': `url(${imageFond})` }">
+    <main class="devenir">
     <section v-if="!connecte" class="intro">
       <div class="etapes" aria-label="Les étapes pour devenir réparateur"><article><div class="etape-top"><b>01</b></div><h2>Créez votre compte</h2><p>Utilisez un seul compte pour tous vos espaces.</p></article><span class="etape-arrow" aria-hidden="true">›</span><article><div class="etape-top"><b>02</b></div><h2>Complétez votre profil</h2><p>Ajoutez vos compétences et zones d’intervention.</p></article><span class="etape-arrow" aria-hidden="true">›</span><article><div class="etape-top"><b>03</b></div><h2>Faites vérifier votre profil</h2><p>Nous vérifions votre candidature avant validation.</p></article></div>
       <div class="actions"><RouterLink class="secondary" :to="{ path: '/connexion', query: { redirection: '/devenir-reparateur' } }">Se connecter</RouterLink><RouterLink class="primary" :to="{ path: '/inscription', query: { redirection: '/devenir-reparateur' } }">Créer mon compte</RouterLink></div>
@@ -206,13 +205,14 @@ function activerLocalisation () {
       <section class="recap"><h2>Vérifiez vos informations</h2><p><b>{{ utilisateur.prenom }} {{ utilisateur.nom }}</b> · {{ utilisateur.email }} · {{ utilisateur.telephone || 'Téléphone non renseigné' }}</p><p>Carte d’identité obligatoire + documents complémentaires.</p></section>
       <button class="primary submit" :disabled="envoi">{{ envoi ? 'Envoi en cours…' : statut === 'REFUSEE' ? 'Renvoyer ma candidature' : 'Envoyer ma candidature' }}</button>
     </form>
-  </main>
-  <PiedDePage />
+    </main>
+    <PiedDePage />
+  </div>
 </template>
 
 <style scoped>
 .devenir {
-  background: #f6f8fc;
+  flex: 1 0 auto;
   min-height: 620px;
   padding: 68px max(5.5%, 48px);
 }
@@ -663,6 +663,17 @@ function activerLocalisation () {
   font-weight: 700;
 }
 
+.devenir-page {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  background-image: linear-gradient(rgba(4, 20, 42, .28), rgba(4, 20, 42, .38)), var(--devenir-bg);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
 .devenir-page :deep(.header) {
   background-image: linear-gradient(90deg, rgba(4, 27, 64, 0.7), rgba(4, 27, 64, 0.35)), var(--devenir-bg);
   background-position: center top;
@@ -687,10 +698,7 @@ function activerLocalisation () {
 }
 
 .devenir {
-  background-image: var(--devenir-bg);
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+  background: transparent;
 }
 
 @media (max-width: 700px) {

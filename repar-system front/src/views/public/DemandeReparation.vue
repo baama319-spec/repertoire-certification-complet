@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import EntetePublic from '../../components/public/EntetePublic.vue'
 import PiedDePage from '../../components/public/PiedDePage.vue'
+import fondDiagnostic from '../../assets/images/image copy 9.png'
 import { api } from '../../services/api'
 import { creerDemande } from '../../services/serviceDemandes'
 
@@ -172,6 +173,7 @@ const nomReparateur = computed(() => {
 </script>
 
 <template>
+  <div class="request-page-shell" :style="{ '--request-background': `url(${fondDiagnostic})` }">
   <EntetePublic />
   <main class="request-page">
     <div class="request-wrap">
@@ -285,6 +287,7 @@ const nomReparateur = computed(() => {
     </div>
   </main>
   <PiedDePage />
+  </div>
 </template>
 
 <style scoped>
@@ -302,4 +305,18 @@ const nomReparateur = computed(() => {
 @media(max-width:650px){.device-carousel{grid-template-columns:30px minmax(0,1fr) 30px;gap:6px}.device-scroll{width:30px;height:30px}.device-choice{flex-basis:calc((100% - 12px)/2);min-width:118px;min-height:90px}}
 .request-page{min-height:calc(100vh - 72px)}
 @media(max-width:800px){.request-page{min-height:calc(100vh - 120px)}}
+.request-page-shell{display:flex;min-height:100vh;flex-direction:column;background-image:linear-gradient(rgba(7,23,42,.48),rgba(7,23,42,.58)),var(--request-background);background-position:center;background-size:cover;background-attachment:fixed}
+.request-page-shell{box-sizing:border-box;padding-top:70px}
+.request-page-shell :deep(.header){position:fixed;top:0;right:0;left:0;z-index:1000;box-sizing:border-box}
+.request-page{flex:1 0 auto;background:transparent}
+.request-card{border-color:rgba(255,255,255,.2);background:rgba(5,12,24,.58);color:#f7fbff;box-shadow:0 25px 65px rgba(0,0,0,.28);backdrop-filter:blur(3px)}
+.form-heading h1,.confirmation h1,.form-section h2,.field-label{color:#fff}
+.form-heading p,.confirmation>p,.helper,.field-label span{color:rgba(255,255,255,.72)}
+.form-section{border-color:rgba(255,255,255,.2)}
+.location-control{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.1)}
+.location-control strong{color:#fff}
+.location-control small{color:rgba(255,255,255,.72)}
+.privacy-note{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.1);color:rgba(255,255,255,.76)}
+.success-icon{background:rgba(16,185,129,.18);color:#8af0c6}
+@media(max-width:800px){.request-page-shell{background-attachment:scroll;padding-top:62px}}
 </style>

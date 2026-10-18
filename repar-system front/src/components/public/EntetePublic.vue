@@ -26,8 +26,9 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <header class="header"><RouterLink class="brand" to="/"><LogoReparSystem :size="38"/><span>ReparSystem</span></RouterLink>
-    <nav><RouterLink to="/">Accueil</RouterLink><RouterLink to="/reparateurs">Trouver un réparateur</RouterLink><RouterLink to="/diagnostic">Faire un diagnostic</RouterLink><RouterLink to="/devenir-reparateur">Devenir réparateur</RouterLink><a href="#about">À propos</a></nav>
+    <nav><RouterLink to="/">Accueil</RouterLink><RouterLink to="/reparateurs">Trouver un réparateur</RouterLink><RouterLink to="/diagnostic">Faire un diagnostic</RouterLink><RouterLink to="/assistance">Assistant</RouterLink><RouterLink to="/devenir-reparateur">Devenir réparateur</RouterLink><a href="#about">À propos</a></nav>
     <div class="account">
+      <RouterLink class="assistant-mobile" to="/assistance">Assistant</RouterLink>
       <template v-if="!utilisateur">
         <RouterLink to="/connexion">Connexion</RouterLink>
         <RouterLink class="signup" to="/inscription">S'inscrire</RouterLink>
@@ -103,6 +104,7 @@ onBeforeUnmount(() => {
   font-weight: 700;
   white-space: nowrap;
 }
+.assistant-mobile{display:none}
 .logout {
   background: #087f70;
   border-color: #087f70;
@@ -122,7 +124,9 @@ onBeforeUnmount(() => {
   .header{padding:0 20px;height:62px;gap:10px}
   .header nav{display:none}
   .account{margin-left:auto;gap:9px}
+  .assistant-mobile{display:inline-flex;align-items:center;justify-content:center;padding:9px 11px;border:1px solid rgba(255,255,255,.24);border-radius:9px;background:#087f70;color:#fff!important;font-size:11px;font-weight:700;white-space:nowrap}
   .account>.account-link{display:inline-flex!important}
   .account>.logout{padding:0 10px;font-size:11px}
 }
+@media(max-width:420px){.account>.signup{display:none}.header{padding:0 12px}.brand{font-size:15px}}
 </style>

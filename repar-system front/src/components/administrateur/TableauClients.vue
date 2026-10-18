@@ -1,6 +1,6 @@
 <template>
 	<div class="table"><table>
-		<thead><tr><th>Client</th><th>Téléphone</th><th>Adresse principale</th><th>Demandes effectuées</th><th>Statut compte</th><th>Actions</th></tr></thead>
+		<thead><tr><th>Client　⌃</th><th>Téléphone　⌃</th><th>Adresse principale　⌃</th><th>Demandes effectuées　⌃</th><th>Statut compte　⌃</th><th>Actions</th></tr></thead>
 		<tbody><tr v-for="client in clients" :key="client.id">
 			<td class="person"><img :src="client.image" :alt="client.name"><span><b>{{client.name}}</b></span></td>
 			<td class="contact"><span>{{client.phone}}</span></td>

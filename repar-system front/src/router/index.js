@@ -20,6 +20,7 @@ import MesAvis from '../views/client/MesAvis.vue'
 import DevenirReparateur from '../views/public/DevenirReparateur.vue'
 import Diagnostic from '../views/public/Diagnostic.vue'
 import DemandeReparation from '../views/public/DemandeReparation.vue'
+import Assistance from '../views/public/Assistance.vue'
 import { actualiserUtilisateur, routeAccueilUtilisateur } from '../services/serviceAuthentification'
 
 const router = createRouter({
@@ -28,6 +29,7 @@ const router = createRouter({
     { path: '/', name: 'accueil', component: Accueil },
     { path: '/reparateurs', name: 'trouver-reparateur', component: TrouverReparateur },
     { path: '/diagnostic', name: 'diagnostic', component: Diagnostic },
+    { path: '/assistance', name: 'assistance', component: Assistance },
     { path: '/demande-reparation', name: 'demande-reparation', component: DemandeReparation },
     { path: '/reparateurs/:slug', name: 'profil-reparateur', component: ProfilReparateurPublic, props: true },
     { path: '/devenir-reparateur', name: 'devenir-reparateur', component: DevenirReparateur },

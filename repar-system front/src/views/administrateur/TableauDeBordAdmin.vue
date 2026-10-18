@@ -1,11 +1,8 @@
 <template>
   <AdministrationLayout>
-    <section class="dashboard" :class="{ 'dark-background': fondNoir }">
+    <section class="dashboard">
       <header class="title">
         <div><h1>Tableau de bord & statistiques</h1></div>
-        <button class="background-toggle" type="button" @click="fondNoir = !fondNoir">
-          {{ fondNoir ? 'Fond clair' : 'Fond noir' }}
-        </button>
       </header>
       <p v-if="erreur" class="feedback error" role="alert">{{ erreur }}</p>
       <p v-else-if="chargement" class="feedback">Chargement des statistiques…</p>
@@ -70,23 +67,6 @@
         </article>
       </section>
 
-      <section class="activity-card" aria-labelledby="activity-title">
-        <header class="activity-header">
-          <h2 id="activity-title">Activité récente</h2>
-          <RouterLink to="/admin/demandes">Voir tout <span aria-hidden="true">→</span></RouterLink>
-        </header>
-        <ol v-if="activitesRecentes.length" class="activity-list">
-          <li v-for="activite in activitesRecentes" :key="activite.id">
-            <time>{{ activite.heure }}</time>
-            <div class="activity-description">
-              <strong>{{ activite.titre }} · {{ activite.reference }}</strong>
-              <span>{{ activite.client }} · {{ activite.appareil }} · {{ activite.zone }}</span>
-            </div>
-          </li>
-        </ol>
-        <p v-else class="activity-empty">Aucune activité récente à afficher.</p>
-      </section>
-
     </section>
   </AdministrationLayout>
 </template>
@@ -100,7 +80,6 @@ const statistiques = ref({ clients_inscrits: 0, reparateurs_actifs: 0, demandes_
 const demandes = ref([])
 const chargement = ref(true)
 const erreur = ref('')
-const fondNoir = ref(false)
 const formatter = valeur => new Intl.NumberFormat('fr-FR').format(Number(valeur) || 0)
 const formatPercent = valeur => `${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(Number(valeur) || 0)}%`
 const kpis = computed(() => [
@@ -133,30 +112,6 @@ const demandesParStatut = computed(() => {
     percent: Math.round(counts[item.key] / totalDemandesStatut.value * 100),
   }))
 })
-const activitesRecentes = computed(() => demandes.value
-  .slice()
-  .sort((a, b) => new Date(b.date_creation || 0) - new Date(a.date_creation || 0))
-  .slice(0, 4)
-  .map(demande => {
-    const date = new Date(demande.date_creation)
-    const labels = {
-      EN_ATTENTE: 'Nouvelle demande',
-      ACCEPTEE: 'Demande acceptée',
-      REFUSEE: 'Demande refusée',
-      ANNULEE: 'Demande annulée',
-    }
-    const client = demande.client_detail || {}
-    const localisation = demande.localisation_detail || {}
-    return {
-      id: demande.id,
-      reference: `#RS-${demande.id}`,
-      titre: labels[demande.statut] || 'Demande mise à jour',
-      client: client.nom || client.nom_complet || 'Client',
-      appareil: demande.appareil || demande.specialite_detail?.nom || 'Réparation',
-      zone: [localisation.ville, localisation.quartier].filter(Boolean).join(', ') || 'Zone non précisée',
-      heure: Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' }).format(date),
-    }
-  }))
 const statusDonutGradient = computed(() => {
   let progression = 0
   const parts = demandesParStatut.value.map(item => {
@@ -418,15 +373,6 @@ onMounted(async () => {
   }
 }
 
-.kpis article {
-  min-height: 96px;
-  padding: 14px 18px;
-}
-
-.kpis strong {
-  margin-top: 12px;
-}
-
 .kpis h2 {
   color: var(--rs-primary, #087f70) !important;
 }
@@ -567,120 +513,7 @@ onMounted(async () => {
   font-size: 11px;
 }
 
-.activity-card {
-  padding: 20px 22px;
-  border: 1px solid var(--rs-border, #d7e8e3);
-  border-radius: 16px;
-  background: var(--rs-surface, #fff);
-  box-shadow: 0 12px 30px rgba(18, 63, 69, 0.07);
-  overflow: hidden;
-}
-
-.activity-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rs-border, #d7e8e3);
-}
-
-.activity-header h2 {
-  margin: 0;
-  color: var(--rs-ink, #123f45);
-  font-size: 16px;
-  font-weight: 750;
-  letter-spacing: -0.02em;
-}
-
-.activity-header a {
-  color: var(--rs-primary, #087f70);
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.activity-list {
-  display: grid;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.activity-list li {
-  position: relative;
-  display: grid;
-  grid-template-columns: 54px minmax(0, 1fr);
-  gap: 0;
-  min-height: 54px;
-}
-
-.activity-list li::before {
-  position: absolute;
-  top: 4px;
-  left: 0;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--rs-primary, #087f70);
-  content: '';
-}
-
-.activity-list li:not(:last-child)::after {
-  position: absolute;
-  top: 12px;
-  bottom: -1px;
-  left: 4px;
-  width: 1px;
-  background: var(--rs-border, #d7e8e3);
-  content: '';
-}
-
-.activity-list time {
-  padding-left: 20px;
-  color: var(--rs-muted, #6d8588);
-  font-size: 10px;
-  line-height: 1.4;
-}
-
-.activity-description {
-  min-width: 0;
-  display: grid;
-  gap: 5px;
-  padding: 0 0 14px 2px;
-}
-
-.activity-description strong {
-  overflow: hidden;
-  color: var(--rs-ink, #123f45);
-  font-size: 12px;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.activity-description span {
-  overflow: hidden;
-  color: #7189a7;
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.activity-empty {
-  margin: 0;
-  padding: 12px 0;
-  color: var(--rs-muted, #6d8588);
-  font-size: 11px;
-}
-
 @media (max-width: 600px) {
-  .activity-card {
-    padding: 16px;
-  }
-
   .status-chart-card {
     min-height: auto !important;
   }
@@ -708,46 +541,6 @@ onMounted(async () => {
 
 .dashboard > .title h1 {
   font-size: 18px;
-}
-
-.dashboard > .title {
-  justify-content: space-between;
-}
-
-.background-toggle {
-  padding: 8px 12px;
-  border: 1px solid #d7e8e3;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--rs-text, #284750);
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dashboard.dark-background {
-  position: relative;
-  z-index: 0;
-}
-
-.dashboard.dark-background::before {
-  position: absolute;
-  z-index: -1;
-  inset: -20px;
-  background: #111827;
-  content: '';
-}
-
-.dashboard.dark-background .background-toggle {
-  border-color: #596273;
-  background: #263244;
-  color: #fff;
-}
-
-@media (max-width: 600px) {
-  .dashboard.dark-background::before {
-    inset: -12px;
-  }
 }
 
 </style>
